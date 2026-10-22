@@ -1,0 +1,63 @@
+diff --git a/src/pyred/coeff_helper.cpp b/src/pyred/coeff_helper.cpp
+index 622bd43e354735916c82178950c8f2ad375cd78d..488d31450d65e4c2f1193d74a98c2130bec040c9 100644
+--- a/src/pyred/coeff_helper.cpp
++++ b/src/pyred/coeff_helper.cpp
+@@ -19,6 +19,7 @@ along with pyRed.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ #include <algorithm>
+ #include <cctype> // isdigit, isalpha, isalnum
++#include <cfloat> // LDBL_MANT_DIG
+ #include <random>
+ #include <sstream>
+ 
+@@ -53,18 +54,48 @@ uint64_t CoeffHelper::random_minmax(uint64_t min, uint64_t max) {
+   return r;
+ }
+ 
+-#ifndef VALGRIND
++#if !defined(VALGRIND) && (LDBL_MANT_DIG >= 64)
+ uint64_t CoeffHelper::mod_mul(uint64_t a, uint64_t b, uint64_t m) {
+   // result = a*b mod m
+   // m must be at most 63 bit.
+   // Need floating point type with at least 64 bit mantissa (80 bit float).
+   // "long double trick" from https://en.wikipedia.org/wiki/Modular_arithmetic.
+-  // NOTE: This does not work in valgrind.
++  // NOTE: This does not work in valgrind. This path is only compiled
++  // when `long double` genuinely has enough mantissa bits (true for
++  // the 80-bit x87 extended format on x86/x86-64); see the __int128
++  // fallback below for platforms where it doesn't (e.g. AArch64,
++  // where `long double` is the same as `double`, 53-bit mantissa --
++  // there this trick used to silently produce wrong results instead
++  // of failing loudly).
+   long double x = a;
+   uint64_t c = x * b / m;
+   int64_t r = static_cast<int64_t>(a * b - c * m) % static_cast<int64_t>(m);
+   return r < 0 ? r + m : r;
+ }
++#elif !defined(VALGRIND) && defined(__SIZEOF_INT128__)
++uint64_t CoeffHelper::mod_mul(uint64_t a, uint64_t b, uint64_t m) {
++  // result = a*b mod m
++  // m must be at most 63 bit.
++  // Exact widening multiply via the compiler's 128-bit integer type
++  // (supported by GCC and Clang), used on platforms where `long
++  // double` does not have enough mantissa bits for the trick above
++  // (e.g. AArch64/Apple Silicon, where `long double` == `double`).
++  // Slower (roughly 5-8x in a microbenchmark, with some run-to-run
++  // variance -- ARM64 lacks a hardware 128/64-bit divide instruction)
++  // than the long-double trick, but exact; only taken on platforms
++  // where the trick would otherwise silently miscompute. x86-64 and
++  // other platforms with a genuine 80-bit `long double` keep using
++  // the faster path above unchanged.
++  return static_cast<uint64_t>((static_cast<__uint128_t>(a) * b) % m);
++}
++#elif !defined(VALGRIND)
++uint64_t CoeffHelper::mod_mul(uint64_t, uint64_t, uint64_t) {
++  static_assert(sizeof(uint64_t) == 0,
++                "No correct mod_mul implementation is available on this "
++                "platform: `long double` does not have enough precision "
++                "for the long-double trick (LDBL_MANT_DIG < 64), and "
++                "__SIZEOF_INT128__ is not defined either.");
++}
+ #else
+ uint64_t CoeffHelper::mod_mul(uint64_t a, uint64_t b, uint64_t m) {
+   // result = a*b mod m, safe version to use in valgrind.

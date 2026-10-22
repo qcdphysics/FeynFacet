@@ -1,0 +1,125 @@
+Notebook[{Cell["Partonic Born cross sections, FORM route: the same table with \
+FORM and its colour library", "Title"], Cell["Same task and same output \
+format as 1-Born.wl (the FeynCalc route), with FORM doing all the spin, \
+Lorentz and colour algebra.  Input: the amplitude records of all 29 channels \
+written by 1-Born.wl (Results/Amplitudes.wl), and its table Results/Born.wl \
+for the comparison.  Output: Results/FORM/Born.wl.\n\nMathematica only writes \
+the amplitudes to a file (amplitudes.inc, one local expression Amp1 ... Amp29 \
+per channel), runs the FORM program form/Born.frm twice (SPIN = U, spin sum; \
+SPIN = P, helicity difference of the incoming partons) and reads the squares \
+back.  Open form/common.h and form/Born.frm to follow the algebra; for every \
+channel the program\n\n  1. multiplies the amplitude by its complex conjugate \
+(reversed gamma strings, transposed generators, primed summed indices);\n  2. \
+sums over all colours with FORM's colour library color.h (#call docolor), \
+before any Dirac algebra, and specializes the group invariants to SU(Nc) with \
+Tr(T^a T^b) = delta^{ab}/2, the normalization of the FeynCalc route;\n  3. \
+closes the fermion lines into traces with the spin sums of the quarks: one \
+trace or two, depending on how the quark lines of the two interfering \
+diagrams connect;\n  4. inserts the spin densities: p-slash gamma5 (-p-slash \
+gamma5 for an antiquark) for a polarized incoming quark, with the HVBM gamma5 \
+written through a four-dimensional epsilon tensor, gamma5 = -(i/24) eps_{mu \
+nu rho sigma} gamma^mu gamma^nu gamma^rho gamma^sigma, normalized so that \
+Tr[gamma^a gamma^b gamma^c gamma^d gamma5] = -4 i eps^{abcd} (FeynCalc with \
+$LeviCivitaSign = -1; checked below); the circular density i eps^{mu nu l \
+r}/(2 l.r) for a polarized incoming gluon l, r being the other incoming \
+momentum; for every other gluon the physical polarization sum -g^{mu nu} + \
+(l^mu r^nu + r^mu l^nu)/(l.r) with the reference vectors of 1-Born.wl, r = pb \
+for l = pa and r = pa for l = pb, p, pd;\n  5. evaluates the D-dimensional \
+traces (tracen), contracts the indices (indices inside epsilon tensors are \
+four-dimensional) and inserts the kinematics s = 2 pa.pb, t = -2 pa.p, u = -2 \
+pb.p.  FORM contracts two epsilon tensors with the Euclidean sign (eps_{abcd} \
+eps_{abcd} = +24 instead of the Minkowski -24); every LL term contains \
+exactly two of them, one per polarized incoming parton, so the LL squares are \
+multiplied by -1.\n\nThe spin and colour averages of the incoming partons are \
+applied here afterwards, exactly as in 1-Born.wl.  The FORM squares must \
+equal the FeynCalc table exactly, for every channel, both spin cases, \
+arbitrary D and arbitrary number of colours Nc.", "Text"], 
+  Cell["Load and export", "Section"], Cell["Load the FeynFacet package \
+(amplitude records, the FORM interface WriteFORMAmplitudes, RunFORM, \
+ReadFORM, and the checks Require).", "Text"], Cell["Get[FileNameJoin[{Noteboo\
+kDirectory[], \"..\", \"..\", \"FeynFacet\", \"FeynFacet.wl\"}]]", "Input"], 
+  Cell["The amplitude records of 1-Born.wl, channel by channel, are written \
+to amplitudes.inc; the FORM expression Amp<i> is the amplitude of the i-th \
+channel of this list, and the table shows how many records (terms with one \
+colour factor and one set of fermion chains) each amplitude has.  With \
+\"ColorLibrary\" -> True the colour objects are written in the conventions of \
+color.h: generators T(i,j,a) = (T^a)_{ij} with the adjoint index last, \
+structure constants f(a,b,c), d_ for both colour deltas, quark colours with \
+dimension NR and gluon colours with dimension NA.  The declarations of all \
+symbols, vectors and indices go to declarations.inc, in the same directory.", 
+   "Text"], Cell["amplitudes = LoadAmplitudes[];\nchannels = \
+amplitudes[\"Channels\"];\nwork = \
+ResultsDirectory[\"FORM\"];\nWriteFORMAmplitudes[Association @ Table[\"Amp\" \
+<> ToString[i] -> amplitudes[\"Records\"][channels[[i]]], {i, \
+Length[channels]}], work, \"ColorLibrary\" -> \
+True];\nTableForm[Table[{\"Amp\" <> ToString[i], channels[[i]], \
+Length[amplitudes[\"Records\"][channels[[i]]]]}, {i, Length[channels]}],\n  \
+TableHeadings -> {None, {\"FORM expression\", \"channel\", \"records\"}}]", 
+   "Input"], Cell["As an example, the amplitude of q g -> q in FORM notation \
+(three diagrams: s- and u-channel quark exchange, t-channel gluon exchange \
+with the three-gluon vertex):", "Text"], Cell["First[Select[StringSplit[Impor\
+t[FileNameJoin[{work, \"amplitudes.inc\"}], \"Text\"], \"L \"],\n  \
+StringStartsQ[#, \"Amp\" <> ToString[First[FirstPosition[channels, \"q g -> \
+q\"]]] <> \" \"] &]]", "Input"], Cell["Run the FORM program", "Section"], 
+  Cell["Born.frm loops over the channels and writes the squares, in channel \
+order, to BornU.m (SPIN = U) and BornP.m (SPIN = P).  It runs with TFORM, the \
+multi-threaded version of FORM, on three worker threads; a FORM error stops \
+the notebook.  The output shows the two result files.", "Text"], 
+  Cell["program = FileNameJoin[{NotebookDirectory[], \"form\", \
+\"Born.frm\"}];\nDo[RunFORM[program, work, \"Workers\" -> 3, \"Define\" -> \
+{\"SPIN=\" <> spin, \"CHANNELS=\" <> ToString[Length[channels]]}], {spin, \
+{\"U\", \"P\"}}];\nFileNames[\"Born*.m\", work]", "Input"], 
+  Cell["Born.frm (SPIN = P) prints G5Check, the difference between the trace \
+Tr[gamma^a gamma^b gamma^c gamma^d gamma5] computed with the explicit HVBM \
+gamma5 and -4 i eps^{abcd} (FeynCalc's convention with $LeviCivitaSign = -1); \
+it must vanish.", "Text"], Cell["formLog = Import[FileNameJoin[{work, \
+\"Born-SPIN=P-CHANNELS=\" <> ToString[Length[channels]] <> \".log\"}], \
+\"Text\"];\ng5Check = StringDelete[First[StringCases[formLog, \"G5Check =\" \
+~~ Shortest[x__] ~~ \";\" :> x]], Whitespace | \"(\" | \
+\")\"];\nRequire[g5Check === \"0\", \"gamma5 normalization check failed in \
+Born.frm\", g5Check];\n\"G5Check = \" <> g5Check", "Input"], 
+  Cell["Averages and comparison with the FeynCalc table", "Section"], 
+  Cell["FORM returns |M|^2 summed over the colours of all four partons and \
+over the spins (UU), or with the spin densities of the two incoming partons \
+(LL), in terms of s, t, u, D, Nc and gs.  The averages are those of \
+1-Born.wl: 1/(2 Nc) for an incoming quark (2 spin states times Nc colours; \
+for LL the 1/2 turns p-slash gamma5 into the helicity density p-slash \
+gamma5/2); 1/((D-2)(Nc^2-1)) for an unpolarized incoming gluon (D-2 \
+polarization states in D dimensions), 1/(Nc^2-1) for a polarized one (its 1/2 \
+is in the circular density).  The result is divided by gs^4 and written with \
+u = -s-t; the output is the channel q g -> q as an example.", "Text"], 
+  Cell["incoming[channel_String] := Take[StringSplit[channel], \
+2];\naverage[channel_, spinCase_] := Times @@ (Switch[#, \"g\", If[spinCase \
+=== \"LL\", 1, 1/(D - 2)]/(Nc^2 - 1), _, 1/(2 Nc)] & /@ \
+incoming[channel]);\nformSquares = <|\"UU\" -> ReadFORM[work, \"BornU.m\"], \
+\"LL\" -> ReadFORM[work, \"BornP.m\"]|>;\nRequire[Length /@ \
+Values[formSquares] === {Length[channels], Length[channels]}, \"FORM did not \
+return one square per channel\"];\nbornNc = Association @ Table[spinCase -> \
+Association @ Table[channels[[i]] ->\n    \
+Factor[Together[average[channels[[i]], spinCase] \
+formSquares[spinCase][[i]]/gs^4 /. u -> -s - t]], {i, Length[channels]}], \
+{spinCase, {\"UU\", \"LL\"}}];\nbornNc[\"UU\"][\"q g -> q\"]", "Input"], 
+  Cell["The comparison: the FeynCalc table is written with CF and CA; with CF \
+= (Nc^2-1)/(2 Nc) and CA = Nc both tables are rational functions of s, t, D \
+and Nc, and their difference must vanish identically, channel by channel.", 
+   "Text"], Cell["feynCalc = LoadResult[\"Born\"][\"Born\"];\ntoNc = {CF -> \
+(Nc^2 - 1)/(2 Nc), CA -> Nc};\ndifference = Association @ Table[spinCase -> \
+Association @ Table[channel ->\n    Together[bornNc[spinCase][channel] - \
+(feynCalc[spinCase][channel] /. toNc)], {channel, channels}], {spinCase, \
+{\"UU\", \"LL\"}}];\nRequire[Union[Flatten[Values /@ Values[difference]]] === \
+{0}, \"The FORM table differs from the FeynCalc table\", \
+difference];\nTableForm[Table[{channel, difference[\"UU\"][channel], \
+difference[\"LL\"][channel]}, {channel, channels}],\n  TableHeadings -> \
+{None, {\"channel\", \"UU: FORM - FeynCalc\", \"LL: FORM - FeynCalc\"}}]", 
+   "Input"], Cell["Save", "Section"], Cell["Written in the format of the \
+FeynCalc route: CF and CA restored as in 1-Born.wl ((Nc-1)(Nc+1) = 2 Nc CF, \
+then Nc = CA).  The saved table is checked once more against the FeynCalc \
+one; the output lists the saved channels.", "Text"], 
+  Cell["colourFactors[expr_] := Factor[expr] /. (-1 + Nc) (1 + Nc) -> 2 Nc CF \
+/. Nc -> CA;\nborn = Map[colourFactors, bornNc, \
+{2}];\nRequire[Union[Flatten[Table[Together[(born[sc][ch] - feynCalc[sc][ch]) \
+/. toNc], {sc, {\"UU\", \"LL\"}}, {ch, channels}]]] === {0},\n  \"The saved \
+FORM table differs from the FeynCalc table\"];\nresult = <|\"Born\" -> born, \
+\"Channels\" -> channels, \"Variables\" -> \"s, t (u = -s-t), D, CF, CA; \
+divided by gs^4\"|>;\nSaveResult[\"Born\", result, \
+\"FORM\"];\nKeys[born[\"UU\"]]", "Input"]}, WindowSize -> {1000, 800}]

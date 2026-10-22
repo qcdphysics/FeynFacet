@@ -1,0 +1,9 @@
+Paths.wl
+**/Results/
+*.log
+__pycache__/
+.DS_Store
+site/public/
+site/artifact/
+
+xform*.str

@@ -1,0 +1,15 @@
+kinematics:
+  incoming_momenta: [pa, pb]
+  outgoing_momenta: [p]
+  kinematic_invariants:
+    - [s, 2]
+    - [t, 2]
+    - [s4, 2]
+  scalarproduct_rules:
+    - [[pa, pa], 0]
+    - [[pb, pb], 0]
+    - [[p, p], 0]
+    - [[pa, pb], "s/2"]
+    - [[pa, p], "-t/2"]
+    - [[pb, p], "(s+t-s4)/2"]
+  symbol_to_replace_by_one: s

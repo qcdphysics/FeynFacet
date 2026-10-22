@@ -1,0 +1,38 @@
+# Real-emission (cut) integral families of the proton-proton classes.
+# Loop momentum k1 (one of the two unobserved partons; k2 = pa + pb - p - k1).
+# Propagators 1 and 2 are the two cut lines k1^2 and k2^2 (reverse unitarity);
+# propagators 3 and 4 are two of the six linear forms
+#   A = (k1-pa)^2, B = (k1-pb)^2, C = (k1+p)^2, A' = (k2-pa)^2, B' = (k2-pb)^2, C' = (k2+p)^2,
+# the primed ones written through k1.  Pairs with two primed forms are mapped
+# onto unprimed pairs by k1 <-> k2 in step 3.
+integralfamilies:
+  - name: "real_AB"
+    loop_momenta: [k1]
+    top_level_sectors: [15]
+    propagators: [["k1", 0], ["pa+pb-p-k1", 0], ["k1-pa", 0], ["k1-pb", 0]]
+    cut_propagators: [1, 2]
+  - name: "real_AC"
+    loop_momenta: [k1]
+    top_level_sectors: [15]
+    propagators: [["k1", 0], ["pa+pb-p-k1", 0], ["k1-pa", 0], ["k1+p", 0]]
+    cut_propagators: [1, 2]
+  - name: "real_BC"
+    loop_momenta: [k1]
+    top_level_sectors: [15]
+    propagators: [["k1", 0], ["pa+pb-p-k1", 0], ["k1-pb", 0], ["k1+p", 0]]
+    cut_propagators: [1, 2]
+  - name: "real_ABp"
+    loop_momenta: [k1]
+    top_level_sectors: [15]
+    propagators: [["k1", 0], ["pa+pb-p-k1", 0], ["k1-pa", 0], ["k1+p-pa", 0]]
+    cut_propagators: [1, 2]
+  - name: "real_ACp"
+    loop_momenta: [k1]
+    top_level_sectors: [15]
+    propagators: [["k1", 0], ["pa+pb-p-k1", 0], ["k1-pa", 0], ["k1-pa-pb", 0]]
+    cut_propagators: [1, 2]
+  - name: "real_BCp"
+    loop_momenta: [k1]
+    top_level_sectors: [15]
+    propagators: [["k1", 0], ["pa+pb-p-k1", 0], ["k1-pb", 0], ["k1-pa-pb", 0]]
+    cut_propagators: [1, 2]

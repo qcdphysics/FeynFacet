@@ -1,0 +1,28 @@
+integralfamilies:
+  - name: "real_ab"
+    loop_momenta: [r]
+    top_level_sectors: [15]
+    propagators:
+      - ["r", 0]
+      - ["pRec-r", 0]
+      - ["k-r", 0]
+      - ["p+r", 0]
+    cut_propagators: [1,2]
+  - name: "real_a_tau"
+    loop_momenta: [r]
+    top_level_sectors: [15]
+    propagators:
+      - ["r", 0]
+      - ["pRec-r", 0]
+      - ["k-r", 0]
+      - ["p-k+r", 0]
+    cut_propagators: [1,2]
+  - name: "real_b_tau"
+    loop_momenta: [r]
+    top_level_sectors: [15]
+    propagators:
+      - ["r", 0]
+      - ["pRec-r", 0]
+      - ["p+r", 0]
+      - ["p-k+r", 0]
+    cut_propagators: [1,2]

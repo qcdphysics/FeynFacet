@@ -1,0 +1,150 @@
+{<|"id" -> "leptonquark-born", "process" -> "LeptonQuark", "group" -> "Born", 
+  "svg" -> "diagrams/leptonquark-born.svg", 
+  "png" -> "diagrams/leptonquark-born.png", "caption" -> "Born diagram of \
+\[ScriptL] q \[RightArrow] \[ScriptL] q: one-photon exchange."|>, 
+ <|"id" -> "leptonquark-vertex", "process" -> "LeptonQuark", 
+  "group" -> "Virtual", "svg" -> "diagrams/leptonquark-vertex.svg", 
+  "png" -> "diagrams/leptonquark-vertex.png", "caption" -> "One-loop QCD \
+vertex correction to \[ScriptL] q \[RightArrow] \[ScriptL] q (the \
+external-leg self energies are scaleless and vanish)."|>, 
+ <|"id" -> "leptonquark-real-1", "process" -> "LeptonQuark", 
+  "group" -> "Real", "svg" -> "diagrams/leptonquark-real-1.svg", 
+  "png" -> "diagrams/leptonquark-real-1.png", "caption" -> "Real emission \
+\[ScriptL] q \[RightArrow] \[ScriptL] q g: gluon radiated from the incoming \
+quark."|>, <|"id" -> "leptonquark-real-2", "process" -> "LeptonQuark", 
+  "group" -> "Real", "svg" -> "diagrams/leptonquark-real-2.svg", 
+  "png" -> "diagrams/leptonquark-real-2.png", "caption" -> "Real emission \
+\[ScriptL] q \[RightArrow] \[ScriptL] q g: gluon radiated from the outgoing \
+quark."|>, <|"id" -> "collins-born", "process" -> "Collins", 
+  "group" -> "Born", "svg" -> "diagrams/collins-born.svg", 
+  "png" -> "diagrams/collins-born.png", "caption" -> "Born diagram of \
+\[ScriptL] q\[UpArrow] \[RightArrow] \[ScriptL] q\[UpArrow]: transverse spin \
+is transferred from the incoming to the observed quark. The NLO diagrams are \
+those of lepton-quark scattering."|>, <|"id" -> "leptonoffdiagonal-qg-1", 
+  "process" -> "LeptonOffDiagonal", "group" -> "Real q \[RightArrow] g", 
+  "svg" -> "diagrams/leptonoffdiagonal-qg-1.svg", 
+  "png" -> "diagrams/leptonoffdiagonal-qg-1.png", 
+  "caption" -> "\[ScriptL] q \[RightArrow] g + X (observed gluon): \
+real-emission diagram 1 of 2."|>, <|"id" -> "leptonoffdiagonal-qg-2", 
+  "process" -> "LeptonOffDiagonal", "group" -> "Real q \[RightArrow] g", 
+  "svg" -> "diagrams/leptonoffdiagonal-qg-2.svg", 
+  "png" -> "diagrams/leptonoffdiagonal-qg-2.png", 
+  "caption" -> "\[ScriptL] q \[RightArrow] g + X (observed gluon): \
+real-emission diagram 2 of 2."|>, <|"id" -> "leptonoffdiagonal-gq-1", 
+  "process" -> "LeptonOffDiagonal", "group" -> "Real g \[RightArrow] q", 
+  "svg" -> "diagrams/leptonoffdiagonal-gq-1.svg", 
+  "png" -> "diagrams/leptonoffdiagonal-gq-1.png", 
+  "caption" -> "\[ScriptL] g \[RightArrow] q + X (observed quark): \
+photon-gluon fusion, diagram 1 of 2."|>, <|"id" -> "leptonoffdiagonal-gq-2", 
+  "process" -> "LeptonOffDiagonal", "group" -> "Real g \[RightArrow] q", 
+  "svg" -> "diagrams/leptonoffdiagonal-gq-2.svg", 
+  "png" -> "diagrams/leptonoffdiagonal-gq-2.png", 
+  "caption" -> "\[ScriptL] g \[RightArrow] q + X (observed quark): \
+photon-gluon fusion, diagram 2 of 2."|>, <|"id" -> "pp-class1-born-1", 
+  "process" -> "Hadronic", "group" -> "Born (class 1)", 
+  "svg" -> "diagrams/pp-class1-born-1.svg", 
+  "png" -> "diagrams/pp-class1-born-1.png", "caption" -> "Born diagram 1 of 1 \
+of q q' \[RightArrow] q q' (channel class 1, q qp -> q)."|>, 
+ <|"id" -> "pp-class13-born-1", "process" -> "Hadronic", 
+  "group" -> "Born (class 13)", "svg" -> "diagrams/pp-class13-born-1.svg", 
+  "png" -> "diagrams/pp-class13-born-1.png", "caption" -> "Born diagram 1 of \
+3 of q g \[RightArrow] q g (channel class 13, q g -> q)."|>, 
+ <|"id" -> "pp-class13-born-2", "process" -> "Hadronic", 
+  "group" -> "Born (class 13)", "svg" -> "diagrams/pp-class13-born-2.svg", 
+  "png" -> "diagrams/pp-class13-born-2.png", "caption" -> "Born diagram 2 of \
+3 of q g \[RightArrow] q g (channel class 13, q g -> q)."|>, 
+ <|"id" -> "pp-class13-born-3", "process" -> "Hadronic", 
+  "group" -> "Born (class 13)", "svg" -> "diagrams/pp-class13-born-3.svg", 
+  "png" -> "diagrams/pp-class13-born-3.png", "caption" -> "Born diagram 3 of \
+3 of q g \[RightArrow] q g (channel class 13, q g -> q)."|>, 
+ <|"id" -> "pp-class15-born-1", "process" -> "Hadronic", 
+  "group" -> "Born (class 15)", "svg" -> "diagrams/pp-class15-born-1.svg", 
+  "png" -> "diagrams/pp-class15-born-1.png", "caption" -> "Born diagram 1 of \
+4 of g g \[RightArrow] g g (channel class 15, g g -> g)."|>, 
+ <|"id" -> "pp-class15-born-2", "process" -> "Hadronic", 
+  "group" -> "Born (class 15)", "svg" -> "diagrams/pp-class15-born-2.svg", 
+  "png" -> "diagrams/pp-class15-born-2.png", "caption" -> "Born diagram 2 of \
+4 of g g \[RightArrow] g g (channel class 15, g g -> g)."|>, 
+ <|"id" -> "pp-class15-born-3", "process" -> "Hadronic", 
+  "group" -> "Born (class 15)", "svg" -> "diagrams/pp-class15-born-3.svg", 
+  "png" -> "diagrams/pp-class15-born-3.png", "caption" -> "Born diagram 3 of \
+4 of g g \[RightArrow] g g (channel class 15, g g -> g)."|>, 
+ <|"id" -> "pp-class15-born-4", "process" -> "Hadronic", 
+  "group" -> "Born (class 15)", "svg" -> "diagrams/pp-class15-born-4.svg", 
+  "png" -> "diagrams/pp-class15-born-4.png", "caption" -> "Born diagram 4 of \
+4 of g g \[RightArrow] g g (channel class 15, g g -> g)."|>, 
+ <|"id" -> "pp-ggggg-real-1", "process" -> "Hadronic", 
+  "group" -> "Real (class 15)", "svg" -> "diagrams/pp-ggggg-real-1.svg", 
+  "png" -> "diagrams/pp-ggggg-real-1.png", "caption" -> "Real emission g g \
+\[RightArrow] g g g (channel class 15): diagram 1 of 25."|>, 
+ <|"id" -> "pp-ggggg-real-13", "process" -> "Hadronic", 
+  "group" -> "Real (class 15)", "svg" -> "diagrams/pp-ggggg-real-13.svg", 
+  "png" -> "diagrams/pp-ggggg-real-13.png", "caption" -> "Real emission g g \
+\[RightArrow] g g g (channel class 15): diagram 13 of 25."|>, 
+ <|"id" -> "pp-ggggg-real-15", "process" -> "Hadronic", 
+  "group" -> "Real (class 15)", "svg" -> "diagrams/pp-ggggg-real-15.svg", 
+  "png" -> "diagrams/pp-ggggg-real-15.png", "caption" -> "Real emission g g \
+\[RightArrow] g g g (channel class 15): diagram 15 of 25."|>, 
+ <|"id" -> "pp-ggggg-real-16", "process" -> "Hadronic", 
+  "group" -> "Real (class 15)", "svg" -> "diagrams/pp-ggggg-real-16.svg", 
+  "png" -> "diagrams/pp-ggggg-real-16.png", "caption" -> "Real emission g g \
+\[RightArrow] g g g (channel class 15): diagram 16 of 25."|>, 
+ <|"id" -> "tmd-bornq", "process" -> "TMD", "group" -> "bornq", 
+  "svg" -> "diagrams/tmd-bornq.svg", "png" -> "diagrams/tmd-bornq.png", 
+  "caption" -> 
+   "Quark beam function, lowest order: q \[RightArrow] O_q W_n."|>, 
+ <|"id" -> "tmd-beamqq-1", "process" -> "TMD", "group" -> "beamqq", 
+  "svg" -> "diagrams/tmd-beamqq-1.svg", "png" -> "diagrams/tmd-beamqq-1.png", 
+  "caption" -> "Quark beam function I_qq at NLO: q \[RightArrow] O_q W_n g, \
+diagram 1 of 2."|>, <|"id" -> "tmd-beamqq-2", "process" -> "TMD", 
+  "group" -> "beamqq", "svg" -> "diagrams/tmd-beamqq-2.svg", 
+  "png" -> "diagrams/tmd-beamqq-2.png", "caption" -> "Quark beam function \
+I_qq at NLO: q \[RightArrow] O_q W_n g, diagram 2 of 2."|>, 
+ <|"id" -> "tmd-beamqg-1", "process" -> "TMD", "group" -> "beamqg", 
+  "svg" -> "diagrams/tmd-beamqg-1.svg", "png" -> "diagrams/tmd-beamqg-1.png", 
+  "caption" -> "Quark beam function I_qg at NLO: g \[RightArrow] O_q W_n \
+q\:0304, diagram 1 of 2."|>, <|"id" -> "tmd-beamqg-2", "process" -> "TMD", 
+  "group" -> "beamqg", "svg" -> "diagrams/tmd-beamqg-2.svg", 
+  "png" -> "diagrams/tmd-beamqg-2.png", "caption" -> "Quark beam function \
+I_qg at NLO: g \[RightArrow] O_q W_n q\:0304, diagram 2 of 2."|>, 
+ <|"id" -> "tmd-borng", "process" -> "TMD", "group" -> "borng", 
+  "svg" -> "diagrams/tmd-borng.svg", "png" -> "diagrams/tmd-borng.png", 
+  "caption" -> 
+   "Gluon beam function, lowest order: g \[RightArrow] O_g W_n^A."|>, 
+ <|"id" -> "tmd-beamgq", "process" -> "TMD", "group" -> "beamgq", 
+  "svg" -> "diagrams/tmd-beamgq.svg", "png" -> "diagrams/tmd-beamgq.png", 
+  "caption" -> 
+   "Gluon beam function I_gq at NLO: q \[RightArrow] O_g W_n^A q."|>, 
+ <|"id" -> "tmd-beamgg-1", "process" -> "TMD", "group" -> "beamgg", 
+  "svg" -> "diagrams/tmd-beamgg-1.svg", "png" -> "diagrams/tmd-beamgg-1.png", 
+  "caption" -> "Gluon beam function I_gg at NLO: g \[RightArrow] O_g W_n^A g, \
+diagram 1 of 4."|>, <|"id" -> "tmd-beamgg-2", "process" -> "TMD", 
+  "group" -> "beamgg", "svg" -> "diagrams/tmd-beamgg-2.svg", 
+  "png" -> "diagrams/tmd-beamgg-2.png", "caption" -> "Gluon beam function \
+I_gg at NLO: g \[RightArrow] O_g W_n^A g, diagram 2 of 4."|>, 
+ <|"id" -> "tmd-beamgg-3", "process" -> "TMD", "group" -> "beamgg", 
+  "svg" -> "diagrams/tmd-beamgg-3.svg", "png" -> "diagrams/tmd-beamgg-3.png", 
+  "caption" -> "Gluon beam function I_gg at NLO: g \[RightArrow] O_g W_n^A g, \
+diagram 3 of 4."|>, <|"id" -> "tmd-beamgg-4", "process" -> "TMD", 
+  "group" -> "beamgg", "svg" -> "diagrams/tmd-beamgg-4.svg", 
+  "png" -> "diagrams/tmd-beamgg-4.png", "caption" -> "Gluon beam function \
+I_gg at NLO: g \[RightArrow] O_g W_n^A g, diagram 4 of 4."|>, 
+ <|"id" -> "tmd-softq-1", "process" -> "TMD", "group" -> "softq", 
+  "svg" -> "diagrams/tmd-softq-1.svg", "png" -> "diagrams/tmd-softq-1.png", 
+  "caption" -> "Quark soft function at NLO: O_S \[RightArrow] W_n W_n\:0304 \
+g, diagram 1 of 2."|>, <|"id" -> "tmd-softq-2", "process" -> "TMD", 
+  "group" -> "softq", "svg" -> "diagrams/tmd-softq-2.svg", 
+  "png" -> "diagrams/tmd-softq-2.png", "caption" -> "Quark soft function at \
+NLO: O_S \[RightArrow] W_n W_n\:0304 g, diagram 2 of 2."|>, 
+ <|"id" -> "tmd-softg-1", "process" -> "TMD", "group" -> "softg", 
+  "svg" -> "diagrams/tmd-softg-1.svg", "png" -> "diagrams/tmd-softg-1.png", 
+  "caption" -> "Gluon soft function at NLO: O_S \[RightArrow] W_n^A \
+W_n\:0304^A g, diagram 1 of 2."|>, <|"id" -> "tmd-softg-2", 
+  "process" -> "TMD", "group" -> "softg", 
+  "svg" -> "diagrams/tmd-softg-2.svg", "png" -> "diagrams/tmd-softg-2.png", 
+  "caption" -> "Gluon soft function at NLO: O_S \[RightArrow] W_n^A \
+W_n\:0304^A g, diagram 2 of 2."|>, <|"id" -> "tmd-virtualq", 
+  "process" -> "TMD", "group" -> "virtualq", 
+  "svg" -> "diagrams/tmd-virtualq.svg", "png" -> "diagrams/tmd-virtualq.png", 
+  "caption" -> "Quark beam function, one-loop virtual graph (scaleless, \
+vanishes in dimensional regularization)."|>}

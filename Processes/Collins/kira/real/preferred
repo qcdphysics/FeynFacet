@@ -1,0 +1,6 @@
+# One cut-bubble master and the same two-direction topology at three physical
+# angular cross-ratios, selected for this analytic cut-integral reduction.
+real_ab[1,1,0,0]
+real_ab[1,1,1,1]
+real_a_tau[1,1,1,1]
+real_b_tau[1,1,1,1]

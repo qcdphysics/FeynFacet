@@ -1,0 +1,117 @@
+Independent collinear scales in the lepton hard functions
+========================================================
+
+Scope and normalization
+-----------------------
+The original lepton tables use one common scale. This additive module restores
+independent PDF, fragmentation and photon-in-lepton factorization scales for
+the six UU/LL coefficients QQ, QG and GQ. The original tables need not change.
+Here Polarized means the incoming lepton-parton helicity difference (LL).
+
+Hard parts are normalized as sigma = s E_c d sigma/d^3 p_c. All vectors below
+use {regular, D0, D1, delta}, where D0=[1/(1-w)]_+ and
+D1=[log(1-w)/(1-w)]_+. Their entries INCLUDE the electromagnetic and strong
+couplings and all overall prefactors. Distributions have coefficients at w=1.
+
+Let C_PDF, C_FF and C_photon denote the coefficients of the respective
+MSbar collinear counterterm poles in this normalization. Then
+
+ H(muPDF,muFF,muPhoton;muR) = H_common(muR)
+   - C_PDF    log(muPDF^2/muR^2)
+   - C_FF     log(muFF^2/muR^2)
+   - C_photon log(muPhoton^2/muR^2).
+
+The scale symbols are arguments; users may substitute the notation used in
+their own factorization formula. Setting all three scales to muR recovers the
+original coefficient exactly. The coupling alphaS is held fixed when testing
+explicit logarithmic scale derivatives. These direct-lepton Born terms are
+electromagnetic; strong-coupling running affects the NLO correction only at
+the next strong-coupling order.
+
+Derivation of the separate residues
+----------------------------------
+The module accepts the actual dimensionally continued Born hard parts:
+
+ b_D(v) = |M_lepton,q(D)|^2/(16 pi^2 s v), with u=-s v,
+ b_gamma,D(v,w) = |M_gamma,a(D)|^2/[16 pi^2 y s (1-v w)],
+ y=(1-v)/(1-v w).
+
+The photon Born term includes its physical alphaS factor, not the auxiliary
+normalization in units alphaS/pi used inside some assembly notebooks.
+Keep the Born series through order epsilon when constructing finite
+counterterms. The scale residues depend on its epsilon^0 coefficient b(v).
+Indeed, for a positive factorization scale mu,
+
+ (muR^2/mu^2)^epsilon (1/epsilon+c_MS)(b0+epsilon b1)
+   = b0/epsilon + c_MS b0+b1 - b0 log(mu^2/muR^2) + O(epsilon).
+
+For the incoming parton, the Born delta fixes its splitting fraction to w.
+The convolution is b(v) P(w)/w. For a quark,
+ P_qq(z)=CF[-(1+z)+2/(1-z)_+ + (3/2) delta(1-z)].
+Multiplication of D0 by 1/w adds a regular 1/w term, giving
+ C_PDF^QQ = alphaS/(2 pi) CF b(v) {(1-w)/w,2,0,3/2}.
+
+For fragmentation, set d=1-v+v w and
+ J(w)=v w b(v w/d)/d^2. If P(z)=R(z)+c0/(1-z)_+ + cdelta delta(1-z),
+ the residue, before multiplying alphaS/(2 pi), is
+
+ {R(d) J(w) + c0 [J(w)-J(1)]/[v(1-w)],
+  c0 J(1)/v, 0, J(1)[cdelta+c0 log(v)]/v}.
+
+The log(v) endpoint follows from restricting the original z-plus distribution
+to d in [1-v,1]. Omitting it changes the scale dependence of the delta term.
+The QG channel has only the FF residue with P_gq(z)=CF[1+(1-z)^2]/z.
+The GQ channel has only the PDF residue, with P_qg(z)=TR[z^2+(1-z)^2]
+for UU and Delta P_qg(z)=TR(2z-1) for LL. The fragmenting parton is unpolarized
+in both cases. The LL incoming quark uses Delta P_qq=P_qq; the finite HVBM
+helicity-restoring term has no additional scale logarithm at this order.
+
+The photon residue is alphaEM/(2 pi) P_gamma/lepton(y) b_gamma(v,w) in the
+regular component, with zero distribution entries. The kernels are
+[1+(1-y)^2]/y for UU and 2-y for LL. The measured kinematics and the photon
+fraction Jacobian are already included in b_gamma,D above.
+
+Using the coefficient tables
+----------------------------
+Files:
+ FeynFacet/LeptonScaleDependence.wl
+ Coefficients/LeptonScaleResidues.wl
+ Checks/check_lepton_scales.wls
+
+Example, from the repository root:
+
+ Get["FeynFacet/LeptonScaleDependence.wl"];
+ tables=Get["Coefficients/LeptonQuark.wl"];
+ residues=Get["Coefficients/LeptonScaleResidues.wl"];
+ channel=tables["Results"]["Polarized"];
+ p=channel["Prefactor"];
+ full=MapThread[Times,{channel["Coefficients"],{p,p/.w->1,p/.w->1,p/.w->1}}];
+ common=full/.LR->Log[muR^2/s];
+ independent=FeynFacet`LeptonScales`LeptonHardAtScales[
+   common,residues["Polarized QQ"],{muR,muPDF,muFF,muPhoton}];
+
+The distinction between p(w) in the regular entry and p(1) in distribution
+entries is essential. To return to dimensionless table coefficients, divide
+the four resulting entries by those same four prefactors.
+
+Checking the result
+-------------------
+After producing the usual result files, run:
+
+ wolframscript -file Checks/check_lepton_scales.wls ROOT OUTPUT All
+
+ROOT is the repository path; OUTPUT is a new local output directory. Replace
+All with FeynCalc, FORM or Tracer to check only that route. The checker derives
+the residues directly from that route's dimensional Born amplitudes and
+compares them with the saved collinear pole coefficients and the logarithmic
+derivatives of BOTH existing finite results and published coefficient tables.
+It verifies six channels per route, requires complete requested coverage,
+rehashes all consumed files and writes the derived residue table and report.
+
+The nontrivial existing-result check is
+ d H_common / d log(muR^2) = -(C_PDF+C_FF+C_photon).
+It supplements the separate-leg counterterm derivation. Differentiating the
+newly constructed scale extension alone would not independently validate it.
+The scalar reductions and finite nonlogarithmic terms remain those of the
+original calculations; this extension requires no new amplitude generation
+or master-integral computation.

@@ -1,0 +1,13 @@
+jobs:
+  - reduce_sectors:
+      reduce:
+        - {topologies: [virtual_ST, virtual_SU, virtual_TU], sectors: [15], r: 7, s: 4}
+      select_integrals:
+        select_mandatory_list:
+          - [targets]
+      run_initiate: true
+      run_triangular: true
+      run_back_substitution: true
+  - kira2math:
+      target:
+        - [targets]

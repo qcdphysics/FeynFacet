@@ -1,0 +1,167 @@
+(* WilsonLine.gen: generic model "QCD with light-like Wilson lines".
+
+   A FeynArts generic model file lists the propagators and vertex structures
+   of each kind of field (F fermion, V vector, S scalar, U ghost).  This file
+   is the standard Lorentz.gen of FeynArts (the parts needed for massless QCD)
+   plus the Feynman rules of a Wilson line, which is represented by a
+   scalar-type field S:
+
+     W(x) = P exp( -i g_s Integral_0^Infinity ds n.A(x + s n) ),  n^2 = 0,
+
+   the gauge link of a TMD operator, running from the operator point x to
+   infinity along the light-like direction n.  Its Feynman rules are those of
+   a heavy quark with velocity n (HQET), without a Dirac matrix:
+
+     propagator   i / (n.q + i0)       q = momentum carried by the line, in the
+                                       direction of its arrow (towards infinity)
+     gluon vertex  -i g_s T^a n^mu     (-i g_s n^mu (T^a_adj) for an adjoint line)
+
+   The arrow of the line is the colour-charge flow.  A line whose arrow points
+   towards infinity is a future-pointing Wilson line (as in semi-inclusive
+   DIS); the antiparticle, with the arrow coming in from infinity, is a
+   past-pointing one (as in Drell-Yan).  FeynArts keeps track of the arrow:
+   the field on an internal propagator is +S or -S according to whether the
+   arrow runs along or against the propagator momentum.  WilsonLineSign
+   (defined in WilsonLineQCD.mod) returns +1 or -1 accordingly and
+   WilsonDirection returns the direction n or nb of the line, so that the
+   propagator below is always i/(n.q) with q the momentum along the arrow.
+   The vertex -i g_s T^a n^mu is the same for both orientations.
+
+   The end of a Wilson line at infinity is an external leg of the diagram.
+   It carries no momentum: the notebooks set its momentum to zero after the
+   amplitude has been generated.
+
+   The TMD operators themselves are represented by non-dynamical "sink"
+   fields with one coupling each (see WilsonLineQCD.mod):
+     O_q  (a fermion F)   quark operator      O_q-bar . q . W-bar        (Dirac index open)
+     O_g  (a vector V)    gluon operator      O_g^mu n_nu F^{nu mu} W-bar  (Lorentz index open)
+     O_S  (a scalar S)    soft operator       W_n-bar . W_nb              (two Wilson lines at a point)
+   An operator matrix element <X| O |p> is then the amplitude for p -> O + W + X,
+   and the operator's open index is the index of the external O leg. *)
+
+KinematicIndices[F] = {};
+KinematicIndices[V] = {Lorentz};
+KinematicIndices[S] = {};
+KinematicIndices[U] = {};
+
+$FermionLines = True;
+P$NonCommuting = F | U;
+
+(* make FeynArts substitute the class field (with its sign) into
+   WilsonDirection[...] and WilsonLineSign[...] when it inserts the
+   classes-level fields into the generic amplitude *)
+P$InsertionObjects = P$InsertionObjects | _Global`WilsonDirection | _Global`WilsonLineSign;
+
+Attributes[FAMetricTensor] = Attributes[FAScalarProduct] = {Orderless};
+FAFourVector /: -FAFourVector[mom_, mu___] := FAFourVector[Expand[-mom], mu];
+FAFourVector[0, ___] = 0;
+SpinorType[_Integer, __] = FADiracSpinor;
+
+M$GenericPropagators = {
+
+  (* fermions: external spinors and the massless propagator i q-slash / q^2 *)
+  AnalyticalPropagator[External][s1 F[j1, mom]] ==
+    FANonCommutative[FADiracSpinor[-mom, Mass[F[j1]]]],
+  AnalyticalPropagator[Internal][s1 F[j1, mom]] ==
+    FANonCommutative[FADiracSlash[-mom] + Mass[F[j1]]] *
+      I FAPropagatorDenominator[mom, Mass[F[j1]]],
+
+  (* vector bosons: polarization vectors and the propagator in a general
+     covariant gauge; the notebooks use Feynman gauge, GaugeXi = 1 *)
+  AnalyticalPropagator[External][s1 V[j1, mom, {li2}]] ==
+    FAPolarizationVector[V[j1], mom, li2],
+  AnalyticalPropagator[Internal][s1 V[j1, mom, {li1} -> {li2}]] ==
+    -I FAPropagatorDenominator[mom, Mass[V[j1]]] *
+      (FAMetricTensor[li1, li2] - (1 - FAGaugeXi[V[j1]]) *
+        FAFourVector[mom, li1] FAFourVector[mom, li2] *
+        FAPropagatorDenominator[mom, Sqrt[FAGaugeXi[V[j1]]] Mass[V[j1]]]),
+
+  (* Wilson lines (scalar-type fields): the far end is an external leg with
+     wave function 1; the eikonal propagator i/(n.q) is kept as the symbol
+     FAEikonal[q, n], read by FCFAConvert and the algebra steps *)
+  AnalyticalPropagator[External][s1 S[j1, mom]] == 1,
+  AnalyticalPropagator[Internal][s1 S[j1, mom]] ==
+    I Global`FAEikonal[Global`WilsonLineSign[S[j1]] mom, Global`WilsonDirection[S[j1]]],
+
+  (* ghosts *)
+  AnalyticalPropagator[External][s1 U[j1, mom]] == 1,
+  AnalyticalPropagator[Internal][s1 U[j1, mom]] ==
+    I FAPropagatorDenominator[mom, Mass[U[j1]]]
+};
+
+M$GenericCouplings = {
+
+  (* quark-quark-gluon: gamma^mu (left and right chiral parts) *)
+  AnalyticalCoupling[s1 F[j1, mom1], s2 F[j2, mom2], s3 V[j3, mom3, {li3}]] ==
+    G[-1][s1 F[j1], s2 F[j2], s3 V[j3]] .
+      {FANonCommutative[FADiracMatrix[li3], FAChiralityProjector[-1]],
+       FANonCommutative[FADiracMatrix[li3], FAChiralityProjector[+1]]},
+
+  (* three and four gluons *)
+  AnalyticalCoupling[s1 V[j1, mom1, {li1}], s2 V[j2, mom2, {li2}], s3 V[j3, mom3, {li3}]] ==
+    G[-1][s1 V[j1], s2 V[j2], s3 V[j3]] .
+      {FAMetricTensor[li1, li2] FAFourVector[mom2 - mom1, li3] +
+       FAMetricTensor[li2, li3] FAFourVector[mom3 - mom2, li1] +
+       FAMetricTensor[li3, li1] FAFourVector[mom1 - mom3, li2]},
+  AnalyticalCoupling[s1 V[j1, mom1, {li1}], s2 V[j2, mom2, {li2}], s3 V[j3, mom3, {li3}], s4 V[j4, mom4, {li4}]] ==
+    G[1][s1 V[j1], s2 V[j2], s3 V[j3], s4 V[j4]] .
+      {FAMetricTensor[li1, li2] FAMetricTensor[li3, li4],
+       FAMetricTensor[li1, li3] FAMetricTensor[li2, li4],
+       FAMetricTensor[li1, li4] FAMetricTensor[li3, li2]},
+
+  (* ghost-ghost-gluon *)
+  AnalyticalCoupling[s1 U[j1, mom1], s2 U[j2, mom2], s3 V[j3, mom3, {li3}]] ==
+    G[1][s1 U[j1], s2 U[j2], s3 V[j3]] .
+      {FAFourVector[mom1, li3], FAFourVector[mom2, li3]},
+
+  (* Wilson line-Wilson line-gluon: the eikonal vertex n^mu.  It does not
+     depend on the momenta, so it is the same for both orientations of the
+     line (G[1]); the sign that distinguishes a future-pointing from a
+     past-pointing line comes from the eikonal propagator, whose momentum
+     runs along the arrow. *)
+  AnalyticalCoupling[s1 S[j1, mom1], s2 S[j2, mom2], s3 V[j3, mom3, {li3}]] ==
+    G[1][s1 S[j1], s2 S[j2], s3 V[j3]] .
+      {FAFourVector[Global`WilsonDirection[S[j1]], li3]},
+
+  (* quark operator O_q-bar q W-bar: the unit Dirac matrix, written as the sum
+     of the two chiral projectors so that FeynArts' fermion-flow rules apply *)
+  AnalyticalCoupling[s1 F[j1, mom1], s2 F[j2, mom2], s3 S[j3, mom3]] ==
+    G[1][s1 F[j1], s2 F[j2], s3 S[j3]] .
+      {FANonCommutative[FAChiralityProjector[-1]],
+       FANonCommutative[FAChiralityProjector[+1]]},
+
+  (* gluon operator O_g^mu n_nu F^{nu mu} W-bar, abelian part: for the gluon
+     with momentum q (incoming) and index rho, n.q g^{mu rho} - q^mu n^rho.
+     The two entries let the classes model pick the gluon (first or second
+     V field); the other entry is set to zero. *)
+  AnalyticalCoupling[s1 V[j1, mom1, {li1}], s2 V[j2, mom2, {li2}], s3 S[j3, mom3]] ==
+    G[1][s1 V[j1], s2 V[j2], s3 S[j3]] .
+      {FAMetricTensor[li1, li2] FAScalarProduct[Global`WilsonDirection[S[j3]], mom1] -
+         FAFourVector[mom1, li2] FAFourVector[Global`WilsonDirection[S[j3]], li1],
+       FAMetricTensor[li1, li2] FAScalarProduct[Global`WilsonDirection[S[j3]], mom2] -
+         FAFourVector[mom2, li1] FAFourVector[Global`WilsonDirection[S[j3]], li2]},
+
+  (* gluon operator, non-abelian part g_s f^{abc} n.A^b A^{mu c}: the three
+     ways of attaching n^mu to one gluon and g^{mu nu} to the other two *)
+  AnalyticalCoupling[s1 V[j1, mom1, {li1}], s2 V[j2, mom2, {li2}], s3 V[j3, mom3, {li3}], s4 S[j4, mom4]] ==
+    G[1][s1 V[j1], s2 V[j2], s3 V[j3], s4 S[j4]] .
+      {FAMetricTensor[li1, li2] FAFourVector[Global`WilsonDirection[S[j4]], li3],
+       FAMetricTensor[li1, li3] FAFourVector[Global`WilsonDirection[S[j4]], li2],
+       FAMetricTensor[li2, li3] FAFourVector[Global`WilsonDirection[S[j4]], li1]},
+
+  (* soft operator O_S W_n-bar W_nb: no Lorentz structure *)
+  AnalyticalCoupling[s1 S[j1, mom1], s2 S[j2, mom2], s3 S[j3, mom3]] ==
+    G[1][s1 S[j1], s2 S[j2], s3 S[j3]] . {1}
+};
+
+(* Denner's fermion-flow rules for the chiral projectors (as in Lorentz.gen) *)
+M$FlippingRules =
+  FANonCommutative[dm : _FADiracMatrix | _FADiracSlash, FAChiralityProjector[pm_]] :>
+    -FANonCommutative[dm, FAChiralityProjector[-pm]];
+
+M$TruncationRules = {_FAPolarizationVector -> 1, _FADiracSpinor -> 1};
+
+M$LastGenericRules = {
+  FAPolarizationVector[p_, _. mom : FourMomentum[Outgoing, _], li_] :>
+    Conjugate[FAPolarizationVector][p, mom, li]
+};

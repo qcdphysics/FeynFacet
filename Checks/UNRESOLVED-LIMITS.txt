@@ -1,0 +1,105 @@
+SOFT, COLLINEAR AND EXCHANGE CHECKS OF SELECTED HADRONIC ALGEBRA
+
+Scope
+The checker reads the FeynCalc-route Algebra.wl files for ordinary hadronic
+class1, transverse-transfer class1 and ordinary hadronic class15. It checks
+qq' -> qq'g soft and incoming-quark collinear limits for UU, LL and transfer
+XX,NN, and exchange of the two unobserved gluons in gg -> ggg for UU,LL.
+The splitting kernels and spin algebra are four-dimensional. The three-gluon
+sector is selected by setting Nf=0 in class15; its weight 1/2 is retained.
+The soft and collinear identities retain generic kinematic ratios. Exchange
+is checked at three saved exact-rational points, rather than symbolically.
+No amplitude generation, integration or finite-assembly helper is loaded.
+
+Colour correlations from Fierz identities
+Let D=delta31 delta42 and X=delta32 delta41 for qq' -> qq'. The Born colour
+state is M=(X-D/Nc)/2, with scalar products <D,D>=<X,X>=Nc^2,<D,X>=Nc.
+The colour norm is (Nc^2-1)/4. The fundamental identity
+
+ T^a_ij T^a_kl = (delta_il delta_kj-delta_ij delta_kl/Nc)/2
+
+gives these matrices in the ordered basis {D,X}:
+
+ T1.T2 = (1/2) {{-1/Nc,1},{1,-1/Nc}},
+ T1.T3 = {{-CF,-1/2},{0,1/(2Nc)}}.
+
+Incoming charges have the incoming-line minus sign. Taking expectation values
+in M yields r12=-1/Nc and r13=1/(2Nc). Colour conservation gives
+r14=-CF-r12-r13=-(Nc^2-2)/(2Nc); the remaining pairs follow by line exchange.
+The checker evaluates these colour-flow matrix elements exactly in Nc.
+
+Soft limit
+Write k2=lambda*l, qi=2pi.l, with rho=qa+qb-qc. On-shell conservation gives
+
+ u=-s-t+lambda*rho,
+ A=-s-t+lambda*qa,
+ B=t-lambda*rho+lambda*qb,
+ C=s-lambda*rho-lambda*qc.
+
+The sum A+B+C remains -(s+t+u). Squaring the eikonal current gives
+-2gs^2 Sum_{i<j}rij*pi.pj/(pi.k2 pj.k2). Thus lambda^2*Real approaches
+Born times
+
+ -4gs^2 [r12*s/(qa*qb)+r13*(-t)/(qa*qc)
+         +r14*(s+t)/(qa*rho)+r14*(s+t)/(qb*qc)
+         +r13*(-t)/(qb*rho)+r12*s/(qc*rho)].
+
+The same soft current multiplies every listed Born spin projection.
+
+Incoming-quark collinear limit
+For k2 -> (1-w)pa, define delta=-2pa.k2. The exact invariant map is
+
+ A=-(s+t)-delta, B=w*t, C=s*w+delta,
+ u=-(s+t)w, s4=(s+t)(1-w).
+
+The hard Born process has incoming momentum w pa, hence invariants
+(s',t',u')=(w*s,w*t,u). The initial-state splitting normalization is
+
+ delta*Real -> -2gs^2/w * P(w) * Born(s',t',u').
+
+The sign follows from delta=-2pa.k2; 1/w is the initial-state spin-density
+and flux normalization. Helicity-conserving splitting amplitudes give
+P_qq=CF(1+w^2)/(1-w) for UU and LL. Their transverse-helicity interference
+gives delta P_qq=2CF*w/(1-w) for XX and NN. These are ordinary kernels in
+0<w<1, before plus-distribution completion and virtual endpoint terms.
+
+Generic ratios and leading powers
+Hard-scale homogeneity sets s=1,t=-v. The arbitrary normalization of l can be
+absorbed in lambda, so qa=1 while qb/qa and qc/qa remain generic. For arbitrary
+s and qa, restore the soft coefficient's factor s/qa^2. This is not a sampled
+soft direction. Likewise delta*Real is dimensionless, so s=1 retains the full
+collinear dependence on v,w. The combined rational numerator and denominator
+are required to be polynomials in the limiting parameter. Their lowest powers determine the
+actual singularity order; a stronger pole fails rather than being discarded.
+Five finite/stronger-pole/vanishing/cancellation/zero controls test the helper.
+
+Identical-gluon exchange
+With k1+k2=pa+pb-p, the exact exchange is
+
+ A -> -(s+t)-A, B -> -(s+u)-B, C -> -t-u-C=s-s4-C.
+
+It preserves A+B+C=-s4 and squares to the identity; these two map identities
+are proved symbolically. The UU and LL real squares are compared at three
+exact-rational points, listed here as (s,t,u,A,B,C,Nc), with gs=1:
+
+ (17,-7,-6,-2,-5,3,3), (23,-8,-9,-4,-6,4,5),
+ (31,-12,-11,-5,-9,6,7).
+
+Each point and its exchanged point must satisfy the phase-space constraint
+and give finite rational values. The source's identical unobserved-gluon
+weight 1/2 is checked as bookkeeping; exchange symmetry alone cannot determine
+that normalization. The incorrect replacement C->s-C must produce unequal
+finite rational values at (29,-11,-10,-3,-9,4,3). Infinities do not count as
+detection of the incorrect map.
+
+Execution
+The process steps must first have produced the three required Algebra.wl
+files. From the repository root, choose an external output directory:
+
+ FEYNFACET_SOURCE="$PWD" FEYNFACET_BENCHMARK_OUTPUT="../unresolved-check" \
+   math -noprompt -script Checks/UnresolvedLimits.wls
+
+Outputs are limits.wl, summary.json and an incremental progress.json.
+Generated artifacts should remain outside the source release. Input hashes
+are checked before and after execution. Finite perturbations of the soft and
+collinear kernels and the incorrect exchange map exercise sensitivity.

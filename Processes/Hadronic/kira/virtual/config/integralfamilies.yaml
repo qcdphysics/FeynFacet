@@ -1,0 +1,16 @@
+# One-loop families of the 2 -> 2 Born processes: the three massless boxes
+# (s-t, s-u and t-u channels); every one-loop graph is mapped onto one of
+# them by a shift of the loop momentum (step 2).
+integralfamilies:
+  - name: "virtual_ST"
+    loop_momenta: [loop]
+    top_level_sectors: [15]
+    propagators: [["loop", 0], ["loop+pa", 0], ["loop+pa+pb", 0], ["loop+p", 0]]
+  - name: "virtual_SU"
+    loop_momenta: [loop]
+    top_level_sectors: [15]
+    propagators: [["loop", 0], ["loop+pa", 0], ["loop+pa+pb", 0], ["loop+pa+pb-p", 0]]
+  - name: "virtual_TU"
+    loop_momenta: [loop]
+    top_level_sectors: [15]
+    propagators: [["loop", 0], ["loop+pa", 0], ["loop+pa-p", 0], ["loop+pa-p+pb", 0]]

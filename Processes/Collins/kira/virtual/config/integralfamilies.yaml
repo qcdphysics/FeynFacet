@@ -1,0 +1,8 @@
+integralfamilies:
+  - name: "virtual"
+    loop_momenta: [L]
+    top_level_sectors: [7]
+    propagators:
+      - ["L", 0]
+      - ["L+p1", 0]
+      - ["L+p2", 0]

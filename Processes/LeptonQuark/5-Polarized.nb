@@ -1,0 +1,152 @@
+Notebook[{Cell["Lepton-quark scattering, step 5: the double-longitudinal NLO \
+hard coefficient", "Title"], Cell["Same structure as 4-Unpolarized.wl (read \
+that first), for the helicity difference Delta sigma = (sigma(++) - \
+sigma(+-))/2 of the incoming lepton and quark.  Input: \
+Results/<route>/Algebra.wl and Reduced.wl.  Output: \
+Results/<route>/Polarized.wl and the comparison with Hinderer, Schlegel and \
+Vogelsang, arXiv:1703.10872.\n\nThree things differ from the unpolarized \
+case.  (1) The HVBM scheme: the polarized matrix elements of step 2 contain \
+the hatted invariant spe3, which step 3 turned into integrals in D + 2 \
+dimensions; they are already included in reduced[\"Real\"][\"Polarized\"].  \
+(2) The splitting functions: the incoming quark and the photon in the lepton \
+are polarized, Delta Pqq = Pqq and Delta P_photon/lepton(y) = 2 - y; the \
+outgoing quark fragments unpolarized.  (3) The HVBM scheme breaks helicity \
+conservation at the quark-gluon vertex by a finite amount; the standard \
+remedy (Ref. Vogelsang 1996, used in arXiv:1703.10872) is a finite \
+renormalization of the polarized quark density with the kernel Delta f_qq = \
+-4 CF (1-z), i.e. the hard part receives the additional term -(alphaS/(2 Pi)) \
+Delta f_qq (x) Delta sigma_Born.\n\nAll factorization scales (incoming quark, \
+outgoing quark, photon in lepton) are set equal to muR, as in that paper.", 
+   "Text"], Cell["Load", "Section"], Cell["Get[FileNameJoin[{NotebookDirector\
+y[], \"..\", \"..\", \"FeynFacet\", \"FeynFacet.wl\"}]]", "Input"], 
+  Cell["route = \"FeynCalc\";\nalgebra = LoadResult[\"Algebra\", \
+route];\nreduced = LoadResult[\"Reduced\", route];\nregion = s > 0 && muR > 0 \
+&& 0 < v < 1 && 0 < w < 1;\ntoVW = {t -> -s (1 - v), s4 -> s v (1 - w), u -> \
+-s v w};\ncouplings = {ee -> Sqrt[4 Pi alphaEM], gs -> Sqrt[4 Pi \
+alphaS]};\nKeys[reduced]", "Input"], Cell["Born terms", "Section"], 
+  Cell["The polarized Born square has no order-eps term; born0 = 2 alphaEM^2 \
+eq^2 (1+v)/(s v (1-v)).", "Text"], Cell["bornHard = \
+Series[algebra[\"Born\"][\"Polarized\"]/(16 Pi^2 s v) /. D -> 4 - 2 eps /. \
+couplings /. {t -> -s (1 - v), u -> -s v}, {eps, 0, 1}];\nborn0 = \
+SeriesCoefficient[bornHard, {eps, 0, 0}] // Simplify;\nborn1 = \
+SeriesCoefficient[bornHard, {eps, 0, 1}] // Simplify;\nRequire[Simplify[born0 \
+- 2 alphaEM^2 eq^2 (1 + v)/(s v (1 - v))] === 0, \"Polarized Born hard part \
+differs from the expected form\"];\n{born0, born1}", "Input"], 
+  Cell["Polarized photon-quark Born, normalized as in the unpolarized case; \
+its order-eps part (the evanescent term of the HVBM scheme) enters the finite \
+photon-in-lepton subtraction.", "Text"], Cell["yPhoton = (1 - v)/(1 - v \
+w);\nphotonHard = Series[(Pi/alphaS) algebra[\"Photon\"][\"Polarized\"]/(16 \
+Pi^2 yPhoton s (1 - v w)) /. D -> 4 - 2 eps /. couplings /.\n  {sh -> yPhoton \
+s, th -> -s (1 - v), uh -> -yPhoton s v w}, {eps, 0, 1}];\nphoton0 = \
+Simplify[SeriesCoefficient[photonHard, {eps, 0, 0}], region];\nphoton1 = \
+Simplify[SeriesCoefficient[photonHard, {eps, 0, 1}], region];\n{photon0, \
+photon1}", "Input"], Cell["Real emission and its threshold expansion", 
+   "Section"], Cell["As in the unpolarized case: the exact threshold factors \
+s4^(-eps), zAB^(-1-eps) and zAB^(-eps) give the branches (1-w)^(-1-2eps) and \
+(1-w)^(-1-eps); ThresholdSplit separates them and EndpointExpand turns each \
+into plus distributions.  The polarized result includes the dimension-shifted \
+(D+2) masters of the hatted terms.", "Text"], Cell["realHard = muR^(2 eps) \
+reduced[\"Real\"][\"Polarized\"]/(32 Pi^3) /. couplings /. toVW;\nsplit = \
+ThresholdSplit[realHard, w, eps];\nKeys[split[\"Branches\"]]", "Input"], 
+  Cell["EndpointExpand applies (1-w)^(-1-lambda eps) = -delta(1-w)/(lambda \
+eps) + D0 - lambda eps D1 + ... to every branch, with D0 = [1/(1-w)]_+ and D1 \
+= [log(1-w)/(1-w)]_+, and splits w-dependent coefficients into their value at \
+w = 1 times the distribution plus an ordinary remainder.  The result has the \
+double pole, the single poles in the basis {regular, D0, delta} and the \
+finite part in {regular, D0, D1, delta}.", "Text"], 
+  Cell["realExpanded = EndpointExpand[split[\"Regular\"], \
+split[\"Branches\"], eps, w, region];\nSimplify[realExpanded[\"Pole2\"], \
+region]", "Input"], Cell["Virtual correction", "Section"], 
+  Cell["The vector form factor multiplies the polarized Born term; helicity \
+is conserved at the photon vertex.", "Text"], 
+  Cell["virtualHard = Series[alphaS CF/(2 Pi) (4 Pi muR^2)^eps \
+reduced[\"Virtual\"] (born0 + eps born1) /. t -> -s (1 - v), {eps, 0, \
+0}];\nvirtualHard = Map[Simplify[#, region] &, virtualHard];\nvirtualPole2 = \
+SeriesCoefficient[virtualHard, {eps, 0, -2}];\nvirtualPole1 = \
+SeriesCoefficient[virtualHard, {eps, 0, -1}];\nvirtualFinite = \
+SeriesCoefficient[virtualHard, {eps, 0, \
+0}];\nRequire[Simplify[realExpanded[\"Pole2\"] + virtualPole2, region] === 0, \
+\"Double poles do not cancel\"];\n\"double poles cancel\"", "Input"], 
+  Cell["Collinear counterterms and the single poles", "Section"], 
+  Cell["As in the unpolarized case, with Delta Pqq(w)/w = CF [(1-w)/w + \
+2/(1-w)]_+ + 3/2 delta(1-w) for the incoming polarized quark, the unpolarized \
+Pqq for the fragmenting quark, and Delta P_photon/lepton(y) = 2 - y.", 
+   "Text"], Cell["incomingTuple[bornTerm_] := CF bornTerm {(1 - w)/w, 2, \
+3/2};\ndw = 1 - v + v w;\njFunction[bornTerm_] := v w (bornTerm /. v -> v \
+w/dw)/dw^2;              (* Born at the shifted point, with the Jacobian \
+*)\nfragmentation[j_] := Module[{jEnd = Simplify[j /. w -> 1, region]},\n  \
+CF/v {2 (j - jEnd)/(1 - w) - v j (1 + dw), 2 jEnd, jEnd (2 Log[v] + \
+3/2)}];\nphotonKernel = 2 - yPhoton;                                          \
+        (* Delta P_photon/lepton *)\npdfPole = alphaS/(2 Pi) \
+incomingTuple[born0];\nffPole = alphaS/(2 Pi) \
+fragmentation[jFunction[born0]];\nphotonPole = {alphaEM/(2 Pi) photonKernel \
+alphaS/Pi photon0, 0, 0};\npoleTable = {realExpanded[\"Pole1\"], {0, 0, \
+virtualPole1}, pdfPole, ffPole, photonPole};\nsinglePoles = \
+Total[poleTable];\nRequire[And @@ (ExactDifference[#, 0, region] === 0 & /@ \
+singlePoles), \"Single poles do not cancel\", \
+singlePoles];\nGrid[Prepend[MapThread[Prepend[Map[Simplify[#, region] &, #2], \
+#1] &,\n  {{\"real emission\", \"virtual\", \"incoming quark\", \"outgoing \
+quark\", \"photon in lepton\", \"sum\"}, Append[poleTable, singlePoles]}],\n  \
+{\"1/eps coefficient of\", \"regular\", \"D0\", \"delta\"}], Alignment -> \
+Left, Dividers -> {{2 -> True}, {2 -> True, 7 -> True}}]", "Input"], 
+  Cell["The finite hard coefficient", "Section"], 
+  Cell["The regular parts still contain the inert symbols F1[n][zAB] etc. of \
+the hypergeometric functions; they are replaced by their explicit expressions \
+(logarithms and dilogarithms) here.  Finite parts of the counterterms as \
+before, plus the helicity-restoring term -(alphaS/(2 Pi)) Delta f_qq (x) \
+Delta sigma_Born with Delta f_qq(z) = -4 CF (1-z) on the incoming quark leg \
+(HelicityRestorationKernel), which contributes +(alphaS/(2 Pi)) 4 CF (1-w)/w \
+born0 to the regular part.", "Text"], Cell["pdfFinite = alphaS/(2 Pi) \
+(MSbarConstant incomingTuple[born0] + incomingTuple[born1]);\nffFinite = \
+alphaS/(2 Pi) (MSbarConstant fragmentation[jFunction[born0]] + \
+fragmentation[jFunction[born1] + 2 jFunction[born0] Log[dw]]);\nphotonFinite \
+= {alphaEM/(2 Pi) photonKernel alphaS/Pi (MSbarConstant photon0 + photon1), \
+0, 0};\nhelicityRestoration = {-alphaS/(2 Pi) HelicityRestorationKernel[w]/w \
+born0, 0, 0};\ncounterterms = {#[[1]], #[[2]], 0, #[[3]]} &[pdfFinite + \
+ffFinite + photonFinite + helicityRestoration];\nfinite = \
+realExpanded[\"Finite\"] + {0, 0, 0, virtualFinite} + \
+counterterms;\nfiniteTable = {realExpanded[\"Finite\"], {0, 0, 0, \
+virtualFinite}, {#[[1]], #[[2]], 0, #[[3]]} &[pdfFinite],\n  {#[[1]], #[[2]], \
+0, #[[3]]} &[ffFinite], {#[[1]], #[[2]], 0, #[[3]]} &[photonFinite], {#[[1]], \
+#[[2]], 0, #[[3]]} &[helicityRestoration]};\nfiniteNames = {\"real \
+emission\", \"virtual\", \"incoming quark\", \"outgoing quark\", \"photon in \
+lepton\", \"helicity restoration\"};\nfinite = finite /. \
+reduced[\"MasterFunctions\"];                 (* insert the explicit F1, F2 \
+functions *)\nprefactor = CF alphaEM^2 eq^2 alphaS/(Pi s v \
+w);\nprefactorEndpoint = prefactor /. w -> 1;          (* the D0, D1 and \
+delta coefficients are defined at w = 1 *)\ncoefficients = \
+Map[Collect[Expand[#], {_Log, _PolyLog}, Factor] &,\n  finite/{prefactor, \
+prefactorEndpoint, prefactorEndpoint, \
+prefactorEndpoint}];\nTableForm[Transpose[{ThresholdBasis, coefficients}]]", 
+   "Input"], Cell["The same coefficients split into their contributions (in \
+units of the prefactor; regular parts with the explicit F1, F2 functions \
+inserted):", "Text"], Cell["Grid[Prepend[MapThread[Prepend[Map[Simplify[#, \
+region] &, #2 /. reduced[\"MasterFunctions\"]], #1] &,\n  {finiteNames, \
+Map[#/{prefactor, prefactorEndpoint, prefactorEndpoint, prefactorEndpoint} &, \
+finiteTable]}],\n  {\"finite part of\", \"regular\", \"D0\", \"D1\", \
+\"delta\"}], Alignment -> Left, Dividers -> {{2 -> True}, {2 -> True}}]", 
+   "Input"], Cell["Comparison with the literature", "Section"], 
+  Cell["reference/HSV2017-polarized.wl transcribes the paper's result exactly \
+as printed: its prefactor and its coefficients of 1, D0, D1 and delta(1-w).  \
+The paper's prefactor contains 1/w and multiplies the distributions as well, \
+so the two forms must be compared as distributions: CanonicalDistribution \
+turns the paper's form into the basis used here with the identities f(w) D0 = \
+f(1) D0 + (f(w) - f(1))/(1-w) and f(w) D1 = f(1) D1 + (f(w) - f(1)) \
+log(1-w)/(1-w).  The difference must vanish identically in the physical \
+region; it is also evaluated numerically at three points.", "Text"], 
+  Cell["Get[FileNameJoin[{NotebookDirectory[], \"reference\", \
+\"HSV2017-polarized.wl\"}]];\npaper = HSV2017Polarized[s, v, w, muR, alphaEM, \
+alphaS, eq, CF];\nliterature = CanonicalDistribution[paper[\"Prefactor\"], \
+paper[\"Coefficients\"], w];\ndifference = Table[ExactDifference[finite[[i]], \
+literature[[i]], region], {i, 4}];\nnumeric = NumericDifference[finite, \
+literature, PhysicalPoints, 20];\n{difference, numeric}", "Input"], 
+  Cell["Save", "Section"], Cell["The result is saved before the final check, \
+so that a failed comparison still leaves every ingredient on disk for \
+inspection.", "Text"], Cell["result = <|\"Basis\" -> ThresholdBasis, \
+\"Prefactor\" -> prefactor, \"Coefficients\" -> coefficients, \"Finite\" -> \
+finite,\n  \"Born\" -> born0, \"Virtual\" -> virtualFinite, \"Real\" -> \
+realExpanded[\"Finite\"], \"Counterterms\" -> counterterms,\n  \
+\"LiteratureDifference\" -> difference, \"Route\" -> \
+route|>;\nSaveResult[\"Polarized\", result, route];\nRequire[difference === \
+{0, 0, 0, 0}, \"Finite coefficient differs from HSV 2017\", \
+difference];\ncoefficients[[4]]", "Input"]}, WindowSize -> {1000, 800}]

@@ -1,0 +1,10 @@
+integralfamilies:
+  - name: "sunset"
+    loop_momenta: [k,l]
+    top_level_sectors: [7]
+    propagators:
+      - ["k", 0]
+      - ["l", 0]
+      - ["p-k-l", 0]
+      - ["p-k", 0]
+      - ["p-l", 0]

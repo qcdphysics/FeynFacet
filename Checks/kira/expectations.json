@@ -1,0 +1,48 @@
+[
+  {
+    "directory": "triangle",
+    "family": "virtual",
+    "master": "virtual[0,1,1]",
+    "cases": [
+      {
+        "target": "virtual[1,1,1]",
+        "coefficient": "-2*(d-3)/(d-4)"
+      },
+      {
+        "target": "virtual[1,1,0]",
+        "coefficient": "0"
+      },
+      {
+        "target": "virtual[1,0,1]",
+        "coefficient": "0"
+      }
+    ]
+  },
+  {
+    "directory": "sunset",
+    "family": "sunset",
+    "master": "sunset[1,1,1,0,0]",
+    "cases": [
+      {
+        "target": "sunset[2,1,1,0,0]",
+        "coefficient": "-(d-3)*(3*d-8)/(d-4)"
+      },
+      {
+        "target": "sunset[3,1,1,0,0]",
+        "coefficient": "(d-3)*(3*d-10)*(3*d-8)/(2*(d-6))"
+      },
+      {
+        "target": "sunset[2,2,1,0,0]",
+        "coefficient": "(d-3)*(3*d-10)*(3*d-8)/(d-4)"
+      },
+      {
+        "target": "sunset[2,2,2,0,0]",
+        "coefficient": "-3*(d-5)*(d-3)*(3*d-10)*(3*d-8)/(d-4)"
+      },
+      {
+        "target": "sunset[1,1,0,0,0]",
+        "coefficient": "0"
+      }
+    ]
+  }
+]

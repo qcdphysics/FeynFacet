@@ -1,0 +1,167 @@
+Notebook[{Cell["Lepton-quark and lepton-gluon scattering with a different \
+tagged parton, step 5: the double-longitudinal NLO coefficients", "Title"], 
+  Cell["Same structure as 4-Unpolarized.wl (read that first), for the \
+helicity difference Delta sigma = (sigma(++) - sigma(+-))/2 of the incoming \
+lepton and parton.  Input: Results/<route>/Algebra.wl and Reduced.wl.  \
+Output: Results/<route>/Polarized.wl and the comparison with Hinderer, \
+Schlegel and Vogelsang, arXiv:1703.10872, Eqs. (13) and (14).\n\nWhat differs \
+from the unpolarized case: the HVBM scheme (the hatted invariant spe3 of step \
+2 became integrals in D + 2 dimensions in step 3; they are included in \
+reduced[\"Real\"]), the polarized kernels for the incoming legs (Delta \
+P_qg(z) = TR (2z - 1) for the gluon of l g -> q + X and Delta \
+P_photon/lepton(y) = 2 - y for the photon in the lepton), while the \
+fragmenting quark of l q -> g + X is unpolarized (P_gq as before).  No finite \
+helicity-restoring counterterm enters: that term, -(alphaS/(2 Pi)) Delta f_qq \
+(x) Delta sigma_Born, belongs to the channel l q -> q + X whose Born process \
+it multiplies.  All factorization scales are set equal to muR, as in the \
+paper.", "Text"], Cell["Load", "Section"], Cell["Get[FileNameJoin[{NotebookDi\
+rectory[], \"..\", \"..\", \"FeynFacet\", \"FeynFacet.wl\"}]]", "Input"], 
+  Cell["route = \"FeynCalc\";\nspin = \"Polarized\";\nalgebra = \
+LoadResult[\"Algebra\", route];\nreduced = LoadResult[\"Reduced\", \
+route];\nregion = s > 0 && muR > 0 && 0 < v < 1 && 0 < w < 1;          (* \
+physical region; fixes every logarithm's branch *)\ntoVW = {t -> -s (1 - v), \
+s4 -> s v (1 - w), u -> -s v w};\ncouplings = {ee -> Sqrt[4 Pi alphaEM], gs \
+-> Sqrt[4 Pi alphaS]};\nchannels = {\"QG\", \"GQ\"};\nKeys[reduced]", 
+   "Input"], Cell["Born terms", "Section"], Cell["The polarized Born hard \
+part of l q -> l q multiplies the collinear counterterms; it has no order-eps \
+term.  Expected: born0 = 2 alphaEM^2 eq^2 (1 + v)/(s v (1-v)).", "Text"], 
+  Cell["bornHard = Series[algebra[\"Born\"][spin]/(16 Pi^2 s v) /. D -> 4 - 2 \
+eps /. couplings /. {t -> -s (1 - v), u -> -s v}, {eps, 0, 1}];\nborn0 = \
+SeriesCoefficient[bornHard, {eps, 0, 0}] // Simplify;\nborn1 = \
+SeriesCoefficient[bornHard, {eps, 0, 1}] // Simplify;\nRequire[Simplify[born0 \
+- 2 alphaEM^2 eq^2 (1 + v)/(s v (1 - v))] === 0, \"Polarized Born hard part \
+differs from the expected form\"];\n{born0, born1}", "Input"], 
+  Cell["Polarized photon Born terms, normalized as in the unpolarized case; \
+their order-eps parts (evanescent terms of the HVBM scheme) enter the finite \
+photon-in-lepton subtraction.  Expected (Eq. 15 of arXiv:1703.10872): 2 Pi CF \
+alphaEM eq^2 v w (2-vw)/(s (1-v) (1-vw)) and -2 Pi TR alphaEM eq^2 (v^2 w^2 + \
+(1-vw)^2)/(s (1-v) v w (1-vw)).", "Text"], Cell["Get[FileNameJoin[{NotebookDi\
+rectory[], \"reference\", \
+\"HSV2015-offdiagonal.wl\"}]];\nGet[FileNameJoin[{NotebookDirectory[], \
+\"reference\", \"HSV2017-offdiagonal.wl\"}]];\nyPhoton = (1 - v)/(1 - v \
+w);\nphotonHard = Association @ Table[channel -> Series[(Pi/alphaS) \
+algebra[\"Photon\"][channel][spin]/(16 Pi^2 yPhoton s (1 - v w)) /. D -> 4 - \
+2 eps /. couplings /.\n  {sh -> yPhoton s, th -> -s (1 - v), uh -> -yPhoton s \
+v w}, {eps, 0, 1}], {channel, channels}];\nphoton0 = \
+Map[Simplify[SeriesCoefficient[#, {eps, 0, 0}], region] &, \
+photonHard];\nphoton1 = Map[Simplify[SeriesCoefficient[#, {eps, 0, 1}], \
+region] &, photonHard];\nexpectedPhoton = <|\"QG\" -> \
+HSV2017PhotonBorn[\"gamma q -> g\", s, v, w, alphaEM, eq, CF], \"GQ\" -> \
+HSV2017PhotonBorn[\"gamma g -> q\", s, v, w, alphaEM, eq, \
+TR]|>;\nDo[Require[Simplify[photon0[channel] - expectedPhoton[channel], \
+region] === 0, \"A photon Born term differs from Eq. (15) of HSV 2017\", \
+channel], {channel, channels}];\n{photon0, photon1}", "Input"], 
+  Cell["Real emission", "Section"], Cell["The integrated real contributions \
+of step 3 in the variables v, w, with the couplings and the scale muR^(2 eps) \
+of the MSbar coupling.  ThresholdSplit and EndpointExpand are the tools of \
+the lepton-quark process: they would turn any power (1-w)^(-1-lambda eps) \
+into plus distributions.  Here the only non-integer powers of 1-w come from \
+s4^(-eps) and (1-z)^eps of the angular masters with no 1/(1-w) in front, so \
+the branch coefficients vanish at w = 1 and the result has no double pole and \
+no D0, D1 or delta term: this is verified.  The single pole is an ordinary \
+function of w.", "Text"], Cell["realHard = Association @ Table[channel -> \
+(muR^(2 eps) reduced[\"Real\"][channel][spin]/(32 Pi^3) /. couplings /. \
+toVW), {channel, channels}];\nsplit = Map[ThresholdSplit[#, w, eps] &, \
+realHard];\nrealExpanded = Map[EndpointExpand[#[\"Regular\"], \
+#[\"Branches\"], eps, w, region] &, \
+split];\nDo[Require[Simplify[realExpanded[channel][\"Pole2\"], region] === 0 \
+&& Simplify[realExpanded[channel][\"Pole1\"][[2 ;; 3]], region] === {0, 0} \
+&&\n    Simplify[realExpanded[channel][\"Finite\"][[2 ;; 4]], region] === {0, \
+0, 0},\n  \"A distribution appeared in an off-diagonal channel\", channel], \
+{channel, channels}];\nrealPole = Map[Simplify[#[\"Pole1\"][[1]] /. \
+reduced[\"MasterFunctions\"], region] &, realExpanded]", "Input"], 
+  Cell["Collinear counterterms and the pole cancellation", "Section"], 
+  Cell["With the hadronic convolutions of docs/CONVENTIONS.md (the same as in \
+the lepton-quark process), a kernel P(z) = R(z) + c0 [1/(1-z)]_+ + cdelta \
+delta(1-z) in units of alphaS/(2 Pi) gives\n\n  incoming parton:   + \
+(alphaS/(2 Pi)) (1/eps) integral dz/z P(z) sigma_Born(z s, z t, u)  =  \
+(alphaS/(2 Pi)) (1/eps) b0 {(R(w) + c0)/w, c0, cdelta}   in the basis \
+{regular, D0, delta},\n  fragmentation:     + (alphaS/(2 Pi)) (1/eps) \
+integral dz/z^2 P(z) sigma_Born(s, t/z, u/z)  =  (alphaS/(2 Pi)) (1/eps) \
+(1/v) {c0 (j - j(1))/(1-w) + v R(dw) j, c0 j(1), j(1) (cdelta + c0 log v)},  \
+dw = 1 - v + v w,  j = v w b0(v -> v w/dw)/dw^2,\n\nwhere the Born delta \
+function fixes z = w for the incoming leg and z = dw for the fragmenting one \
+(the kernels here have c0 = cdelta = 0).  The channel l q -> g + X needs the \
+fragmentation q -> g of the Born quark with P_gq(z) = CF (1 + (1-z)^2)/z; the \
+channel l g -> q + X needs the parton distribution g -> q with P_qg(z) = TR \
+(z^2 + (1-z)^2).  The photon in the lepton gives + (alphaEM/(2 Pi)) (1/eps) \
+P_photon/lepton(y) times the photon hard part at y = (1-v)/(1-vw).  Every \
+counterterm multiplies a D-dimensional Born term, whose order-eps part, with \
+the MSbar constant log(4 Pi) - EulerGamma (and the order-eps Jacobian 2 j0 \
+log(dw) of the fragmentation), feeds the finite part.  The table at the end \
+lists each contribution to the single pole, whose sum must vanish.", "Text"], 
+  Cell["kernelPrefix = If[spin === \"Polarized\", \"Delta \", \"\"];          \
+          (* the incoming partons are polarized in the LL case, the \
+fragmenting one is not *)\nincomingTuple[kernel_, bornTerm_] := bornTerm \
+{(kernel[[1]] + kernel[[2]])/w, kernel[[2]], kernel[[3]]};\ndw = 1 - v + v \
+w;\njFunction[bornTerm_] := v w (bornTerm /. v -> v \
+w/dw)/dw^2;\nfragmentationTuple[kernel_, j_] := Module[{jEnd = Simplify[j /. \
+w -> 1, region]},\n  (1/v) {kernel[[2]] (j - jEnd)/(1 - w) + v kernel[[1]] j, \
+kernel[[2]] jEnd, jEnd (kernel[[3]] + kernel[[2]] Log[v])}];\nphotonKernel = \
+SplittingKernel[kernelPrefix <> \"photon/lepton\", yPhoton][[1]];\npartonPole \
+= <|\n  \"QG\" -> alphaS/(2 Pi) fragmentationTuple[SplittingKernel[\"gq\", \
+dw], jFunction[born0]],\n  \"GQ\" -> alphaS/(2 Pi) \
+incomingTuple[SplittingKernel[kernelPrefix <> \"qg\", w], \
+born0]|>;\npartonFinite = <|\n  \"QG\" -> alphaS/(2 Pi) (MSbarConstant \
+fragmentationTuple[SplittingKernel[\"gq\", dw], jFunction[born0]] +\n    \
+fragmentationTuple[SplittingKernel[\"gq\", dw], jFunction[born1] + 2 \
+jFunction[born0] Log[dw]]),\n  \"GQ\" -> alphaS/(2 Pi) (MSbarConstant \
+incomingTuple[SplittingKernel[kernelPrefix <> \"qg\", w], born0] + \
+incomingTuple[SplittingKernel[kernelPrefix <> \"qg\", w], \
+born1])|>;\nphotonPole = Map[{alphaEM/(2 Pi) photonKernel alphaS/Pi #, 0, 0} \
+&, photon0];\nphotonFinite = Association @ Table[channel -> {alphaEM/(2 Pi) \
+photonKernel alphaS/Pi (MSbarConstant photon0[channel] + photon1[channel]), \
+0, 0}, {channel, channels}];\ncounterName = <|\"QG\" -> \"fragmentation q -> \
+g\", \"GQ\" -> \"parton distribution g -> q\"|>;\npoleTable = Association @ \
+Table[channel -> {realExpanded[channel][\"Pole1\"], partonPole[channel], \
+photonPole[channel]}, {channel, channels}];\nsinglePoles = Map[Total, \
+poleTable];\nDo[Require[And @@ (ExactDifference[#, 0, region] === 0 & /@ \
+singlePoles[channel]), \"Single poles do not cancel\", {channel, \
+singlePoles[channel]}], {channel, \
+channels}];\nColumn[Table[Grid[Prepend[MapThread[Prepend[Map[Simplify[#, \
+region] &, #2], #1] &,\n  {{\"real emission\", counterName[channel], \"photon \
+in lepton\", \"sum\"}, Append[poleTable[channel], singlePoles[channel]]}],\n  \
+{channel <> \": 1/eps coefficient of\", \"regular\", \"D0\", \"delta\"}], \
+Alignment -> Left, Dividers -> {{2 -> True}, {2 -> True, 5 -> True}}], \
+{channel, channels}]]", "Input"], Cell["The finite coefficients", "Section"], 
+  Cell["The regular parts still contain the inert symbols F1[n][z], F2[n][z] \
+of the hypergeometric functions, replaced here by their explicit forms.  The \
+finite coefficient is the sum of the real emission and the two counterterms; \
+it is an ordinary function (its D0, D1 and delta components vanish), quoted \
+in units of the prefactor alphaEM^2 eq^2 CF alphaS/(Pi s v w) (TR for the \
+second channel) of the paper.", "Text"], Cell["colourOf = <|\"QG\" -> CF, \
+\"GQ\" -> TR|>;\nfinite = Association @ Table[channel -> \
+((realExpanded[channel][\"Finite\"] + {#[[1]], #[[2]], 0, #[[3]]} \
+&[partonFinite[channel] + photonFinite[channel]]) /. \
+reduced[\"MasterFunctions\"]), {channel, \
+channels}];\nDo[Require[Simplify[finite[channel][[2 ;; 4]], region] === {0, \
+0, 0}, \"The finite coefficient has a distribution part\", channel], \
+{channel, channels}];\nprefactor = Association @ Table[channel -> \
+colourOf[channel] alphaEM^2 eq^2 alphaS/(Pi s v w), {channel, \
+channels}];\ncoefficients = Association @ Table[channel -> \
+Collect[Expand[finite[channel][[1]]/prefactor[channel]], {_Log, _PolyLog}, \
+Factor], {channel, channels}];\ncoefficients[\"GQ\"]", "Input"], 
+  Cell["Comparison with the literature", "Section"], 
+  Cell["reference/HSV2017-offdiagonal.wl transcribes Eqs. (13), (14) and \
+Appendix A of arXiv:1703.10872 exactly as printed (the coefficient of \
+alphaS/Pi, with a single scale mu, as here).  The difference must vanish \
+identically in the physical region; it is also evaluated numerically at three \
+points.", "Text"], Cell["literature = <|\"QG\" -> alphaS/Pi \
+HSV2017OffDiagonal[\"q -> g\", s, v, w, muR, alphaEM, eq, CF], \"GQ\" -> \
+alphaS/Pi HSV2017OffDiagonal[\"g -> q\", s, v, w, muR, alphaEM, eq, \
+TR]|>;\ndifference = Association @ Table[channel -> \
+ExactDifference[finite[channel][[1]], literature[channel], region], {channel, \
+channels}];\nnumeric = Association @ Table[channel -> \
+NumericDifference[{finite[channel][[1]]}, {literature[channel]}, \
+PhysicalPoints, 20], {channel, channels}];\n{difference, numeric}", "Input"], 
+  Cell["Save", "Section"], Cell["The result is saved before the final check, \
+so that a failed comparison still leaves every ingredient on disk for \
+inspection.", "Text"], Cell["result = <|\"Basis\" -> ThresholdBasis, \
+\"Prefactor\" -> prefactor, \"Coefficients\" -> coefficients, \"Finite\" -> \
+finite, \"Born\" -> born0,\n  \"Real\" -> Map[#[\"Finite\"] &, realExpanded], \
+\"Counterterms\" -> <|\"parton\" -> partonFinite, \"photon\" -> \
+photonFinite|>,\n  \"LiteratureDifference\" -> difference, \"Route\" -> \
+route, \"Spin\" -> spin|>;\nSaveResult[spin, result, \
+route];\nRequire[Values[difference] === {0, 0}, \"Finite coefficients differ \
+from HSV 2017\", difference];\ncoefficients", "Input"]}, 
+ WindowSize -> {1000, 800}]

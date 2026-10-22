@@ -1,0 +1,30 @@
+{
+  "schema": "FeynFacet auxiliary coefficient data, version1",
+  "scope": "Auxiliary scale-residue data; distinct from the eight process tables in MANIFEST.json",
+  "files": {
+    "LeptonScaleResidues.wl": {
+      "sha256": "6101f2759f3ca87344d5e7e65d4ce47f2deae8d8af7b7cbae194c940de15ecab",
+      "description": "PDF, FF and photon-in-lepton collinear residues for UU/LL QQ,QG,GQ; full coupling-inclusive hard-part normalization",
+      "associationKeys": [
+        "Unpolarized QQ",
+        "Polarized QQ",
+        "Unpolarized QG",
+        "Unpolarized GQ",
+        "Polarized QG",
+        "Polarized GQ"
+      ],
+      "basis": [
+        "regular",
+        "D0",
+        "D1",
+        "delta"
+      ],
+      "generator": "Checks/check_lepton_scales.wls",
+      "generator_sha256": "897fe592e508f4b14af39beae31e1ee83d71b5e282fd488a2f845822aa8428fe",
+      "module": "FeynFacet/LeptonScaleDependence.wl",
+      "module_sha256": "540e01c8f4d745aaa8b818873ad56e77234ffe10e75e211dbd76dc38cfbb9cc5",
+      "documentation": "docs/LEPTON-SCALES.txt",
+      "documentation_sha256": "f67ad6ca6f32074a601cb10e1d5d5e49a772b5f6f382a04bcae11ff5c7138fa4"
+    }
+  }
+}

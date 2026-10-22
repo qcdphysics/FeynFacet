@@ -1,0 +1,68 @@
+Notebook[{Cell["Lepton-quark scattering with transverse spin transfer, step 2 \
+(FORM route): spin and colour algebra", "Title"], 
+  Cell["Same task and same output format as the FeynCalc route, now with FORM \
+doing the Dirac algebra (the programs are in form/; read \
+Processes/LeptonQuark/2-Algebra-FORM.wl and its form/common.h first).  \
+Born.frm, Real.frm and Photon.frm are each run three times, with SPIN = U \
+(spin average), NN and XX (transverse spin transfer with the normal and the \
+in-plane axes); Virtual.frm projects the vertex graph onto the Born current.  \
+The in-plane axes are used with polynomial coefficients, aXs = s aX and bXs = \
+(t+u)^2 bX (FORM has no polynomial denominators), so the XX results are \
+divided here by s (t+u)^2 and by the product of the lengths -t u/(t+u), i.e. \
+by -s t u (t+u); the normal component nr of the real emission is reduced here \
+as in the FeynCalc route.", "Text"], Cell["Load and export", "Section"], 
+  Cell["Get[FileNameJoin[{NotebookDirectory[], \"..\", \"..\", \"FeynFacet\", \
+\"FeynFacet.wl\"}]]", "Input"], Cell["records = \
+LoadAmplitudes[][\"Records\"];\nwork = \
+ResultsDirectory[\"FORM\"];\nWriteFORMAmplitudes[<|\"Born1\" -> \
+records[\"Born\"][[1]], \"Real1\" -> records[\"Real\"][[1]], \"Real2\" -> \
+records[\"Real\"][[2]],\n  \"Vertex1\" -> records[\"VirtualVertex\"][[1]], \
+\"Photon1\" -> records[\"Photon\"][[1]], \"Photon2\" -> \
+records[\"Photon\"][[2]]|>, work]", "Input"], Cell["Run the FORM programs", 
+   "Section"], Cell["program[name_] := FileNameJoin[{NotebookDirectory[], \
+\"form\", name}];\nDo[RunFORM[program[name], work, \"Define\" -> {\"SPIN=\" \
+<> spin}], {name, {\"Born.frm\", \"Real.frm\", \"Photon.frm\"}}, {spin, \
+{\"U\", \"NN\", \"XX\"}}];\nRunFORM[program[\"Virtual.frm\"], work, \
+\"Define\" -> {\"SPIN=U\"}];\nFileNames[\"*.m\", work]", "Input"], 
+  Cell["Read the results", "Section"], Cell["spinCases = {\"Unpolarized\", \
+\"NN\", \"XX\"};\nformName = <|\"Unpolarized\" -> \"U\", \"NN\" -> \"NN\", \
+\"XX\" -> \"XX\"|>;\nxxScale = <|\"Unpolarized\" -> 1, \"NN\" -> 1, \"XX\" -> \
+-s t u (t + u)|>;\nxxScalePhoton = <|\"Unpolarized\" -> 1, \"NN\" -> 1, \
+\"XX\" -> -sh th uh (th + uh)|>;\nborn = Association @ Table[spin -> \
+Factor[ReadFORM[work, \"Born\" <> formName[spin] <> \".m\"]/(xxScale[spin] /. \
+u -> -s - t)], {spin, spinCases}];\nborn[\"Transverse\"] = \
+Factor[(born[\"NN\"] + \
+born[\"XX\"])/2];\nRequire[Simplify[(born[\"Unpolarized\"] - 2 ee^4 eq^2 \
+((s^2 + u^2)/t^2 - (4 - D)/2)) /. u -> -s - t] === 0, \"Born square differs \
+from the textbook result\"];\nRequire[Simplify[{born[\"NN\"] - ee^4 eq^2 (-4 \
+s u/t^2 - (D - 4)), born[\"XX\"] - ee^4 eq^2 (-4 s u/t^2 + (D - 4))} /. u -> \
+-s - t] === {0, 0},\n  \"Transverse Born tensors differ from Eq. \
+(transverse-born-tensor) of the paper\"];\nborn", "Input"], 
+  Cell["gram = {{0, s/2, -u/2}, {s/2, 0, -t/2}, {-u/2, -t/2, 0}};             \
+        (* l.l, l.k, l.p; ... *)\nparallelSquare = Factor[{(s + t + u + a + \
+b)/2, -a/2, b/2}.Inverse[gram].{(s + t + u + a + b)/2, -a/2, \
+b/2}];\nnormalReduction[expr_] := Module[{coefficients = \
+CoefficientList[Expand[expr], nr]},\n  Require[Length[coefficients] <= 3, \
+\"The real-emission tensor has a power of nr above two\", \
+Length[coefficients] - 1];\n  Factor[coefficients[[1]] + \
+If[Length[coefficients] == 3, coefficients[[3]] (parallelSquare + spe3), \
+0]]];\nreal = Association @ Table[spin -> normalReduction[ReadFORM[work, \
+\"Real\" <> formName[spin] <> \".m\"]/xxScale[spin]], {spin, \
+spinCases}];\nreal[\"Transverse\"] = Factor[(real[\"NN\"] + \
+real[\"XX\"])/2];\nRequire[Factor[(real[\"NN\"] - real[\"XX\"]) /. {D -> 4, \
+spe3 -> 0}] === 0, \"The two transverse components differ in four \
+dimensions\"];\nFactor[real[\"Transverse\"] /. {D -> 4, spe3 -> 0}]", 
+   "Input"], Cell["photon = Association @ Table[spin -> Factor[ReadFORM[work, \
+\"Photon\" <> formName[spin] <> \".m\"]/(D - 2)/(xxScalePhoton[spin] /. uh -> \
+-sh - th)], {spin, spinCases}];\nphoton[\"Transverse\"] = \
+Factor[(photon[\"NN\"] + \
+photon[\"XX\"])/2];\nRequire[Simplify[(photon[\"Transverse\"]/(CF ee^2 eq^2 \
+gs^2) - (4 - 2 eps^2 th^2/((1 - eps) sh uh))) /. D -> 4 - 2 eps /. uh -> -sh \
+- th] === 0,\n  \"The photon transverse tensor differs from Eq. \
+(transverse-photon-born) of the paper\"];\nphoton", "Input"], 
+  Cell["{numerator, bornCurrent} = ReadFORM[work, \
+\"Virtual.m\"];\nvirtualFamily = Factor[numerator/bornCurrent]", "Input"], 
+  Cell["Save", "Section"], Cell["algebra = <|\"Born\" -> born, \"Real\" -> \
+real, \"Photon\" -> photon, \"VirtualFamily\" -> \
+virtualFamily|>;\nSaveResult[\"Algebra\", algebra, \"FORM\"];\nKeys[algebra]"\
+, "Input"]}, WindowSize -> {1000, 800}]

@@ -1,0 +1,53 @@
+name: Kira arithmetic
+on:
+  pull_request:
+    paths: ['Checks/**', 'tools/**', 'feynfacet.py', '.github/workflows/kira-arithmetic.yml']
+  push:
+    paths: ['Checks/**', 'tools/**', 'feynfacet.py', '.github/workflows/kira-arithmetic.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  arithmetic:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned source and verify bundled patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          patch = Path('tools/patches/kira-3.1-mod-mul.patch')
+          assert hashlib.sha256(patch.read_bytes()).hexdigest() == 'ac74e82e9f1e5ebf3945d6738159d2dee251789f252900fafae3de2ec8ad03ec'
+          PY
+          git clone --branch 3.1 --depth 1 https://gitlab.com/kira-pyred/kira.git "$RUNNER_TEMP/kira"
+          test "$(git -C "$RUNNER_TEMP/kira" rev-parse HEAD)" = 5760f42f8decd7eb5474c780db75b5e5e7b450a0
+      - name: Check unpatched control
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == macOS ]]; then
+            test "$(uname -m)" = arm64
+          fi
+          set +e
+          python3 Checks/check_kira_arithmetic.py --source "$RUNNER_TEMP/kira" --workdir "$RUNNER_TEMP/unpatched" > "$RUNNER_TEMP/unpatched.log" 2>&1
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP/unpatched.log"
+          if [[ "$RUNNER_OS" == macOS ]]; then
+            test "$status" = 1
+            grep -Eq 'LDBL_MANT_DIG=53; mismatches=[1-9][0-9]*/100072' "$RUNNER_TEMP/unpatched.log"
+          else
+            test "$status" = 0
+            grep -q 'mismatches=0/100072' "$RUNNER_TEMP/unpatched.log"
+          fi
+      - name: Check patched arithmetic
+        shell: bash
+        run: |
+          git -C "$RUNNER_TEMP/kira" apply "$GITHUB_WORKSPACE/tools/patches/kira-3.1-mod-mul.patch"
+          python3 Checks/check_kira_arithmetic.py --source "$RUNNER_TEMP/kira" --workdir "$RUNNER_TEMP/patched"

@@ -1,0 +1,6 @@
+# The two-body phase-space volume and the angular integral of each family,
+# at the physical cross-ratios zAT and zBT of Processes/LeptonOffDiagonal/3-Reduce.wl.
+real_a_tau[1,1,0,0]
+real_a_tau[1,1,1,1]
+real_b_tau[1,1,0,0]
+real_b_tau[1,1,1,1]

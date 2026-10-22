@@ -1,0 +1,43 @@
+INTERFERENCE CENSUS AND EXCHANGE IN q g -> q g g
+
+Checks/QGExchange.wls reads only the FeynCalc-route class-13 subprocess
+cache files real-q_g_q_g_g-{UU,LL}-i-j.wl. These are products of a
+16-amplitude basis. For each spin projection the complete upper triangle
+contains 16 diagonal and 120 off-diagonal products. The reconstructed real
+square is the sum of Re(Value) on the diagonal and 2 Re(Value) off it.
+A common initial-state average or identical-particle weight has no effect
+on the exchange test; the checker does not determine those overall factors.
+No production squaring, real-emission summation or integration helper is
+loaded, and other class-13 quark-pair subprocesses are not included.
+
+There are 12 literal exact-zero generic cached products per spin. The other
+124 are proved nonzero expressions by exhibiting a finite nonzero rational
+value at at least one of the three points below. This census does not
+identify whether any zero originates in colour orthogonality or spin algebra.
+
+For k1+k2=pa+pb-p, exchange of the two unobserved gluons acts as
+
+ A -> -(s+t)-A, B -> -(s+u)-B, C -> -t-u-C=s-s4-C,
+ s4=s+t+u.
+
+The map preserves A+B+C=-s4 and is an involution; these are symbolic map
+identities. The real-square equality itself is sampled at D=4, spe3=0,
+gs=1, at these exact-rational (s,t,u,A,B,C,Nc) points:
+
+ (17,-7,-6,-2,-5,3,3), (23,-8,-9,-4,-6,4,5),
+ (31,-12,-11,-5,-9,6,7).
+
+All individual interference values must be finite rational numbers on both
+sides, and each point must satisfy the phase-space constraint. At the
+separate point (29,-11,-10,-3,-9,4,3), the incorrect map C->s-C must yield
+unequal finite sums; singular values cannot pass this negative control.
+All 272 input file hashes are checked before and after the comparisons.
+
+After producing the class-13 FeynCalc algebra caches, run from the repository
+root with a separate output directory:
+
+ FEYNFACET_SOURCE="$PWD" FEYNFACET_BENCHMARK_OUTPUT="../qg-exchange-check" \
+   math -noprompt -script Checks/QGExchange.wls
+
+The outputs are exchange.wl, summary.json and incremental progress.json.
+Keep generated outputs outside the source release.

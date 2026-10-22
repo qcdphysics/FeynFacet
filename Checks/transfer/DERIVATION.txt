@@ -1,0 +1,114 @@
+INDEPENDENT TRANSVERSE-TRANSFER FINITE ASSEMBLY
+
+Scope. The new program uses the existing D-dimensional Born tensors and scalar
+Reduced.wl real/virtual integrals as mathematical inputs. It does not load the
+FeynFacet package or step 4. Transfer.wl is loaded only as the comparison target.
+This is an independent assembly/subtraction implementation, not an independent
+amplitude calculation or master-integral evaluation.
+
+Normalization. For a Born square Q=|M|^2/g_s^4, define
+ B_D(s,v)=alpha_s^2 Q(s,-s(1-v),D)/(s v), D=4-2epsilon.
+This follows directly from flux 1/(2s) and the tagged-particle measure
+d^3p/[(2pi)^3 2E]: sigma=sE d sigma/d^3p gives |M|^2 dPhi_X/(32pi^3).
+At Born level dPhi_1=2pi delta_+(s4), with delta(s4)=delta(1-w)/(s v),
+giving |M|^2/(16pi^2 s v). Inserting g_s^4=(4pi alpha_s)^2 yields B_D.
+All O(epsilon) terms in Q and its incoming-gluon averages are retained. In the
+common coefficient convention, real emission carries
+ mu_R^(2epsilon) (4 pi alpha_s)^3/(32 pi^3) times Reduced.Real/g_s^6.
+Virtual interference carries 2/(4 pi)^(2-epsilon) times the Born phase-space
+normalization (4 pi alpha_s)^3/(16 pi^2 s v), from converting the loop measure
+d^D l/(2pi)^D to d^D l/(i pi^(D/2)) and taking 2Re(M1 M0*).
+The actual scalar-input definition was checked in
+Processes/HadronicTransfer/2-Algebra-FeynCalc.wl: the virtual constructor
+contains I average[incoming] normalize[...], with no factor two and no loop
+measure factor. It therefore supplies i c_j M0* times the scalar masters.
+The phase and factor two in the independent assembler follow this definition;
+neither is fitted to real-emission pole cancellation.
+
+Collinear convolution derivation. Write every LO kernel as
+ P(z)=r(z)+c[1/(1-z)]_+ +d delta(1-z).
+Resolving the lower Born delta yields W(w,epsilon)P(z(w)), where z(1)=1.
+The maps follow by solving the lower-process Born condition s'+t'+u'=0,
+with w'=-u'/(s'+t') and v'=1+t'/s'. For incoming a,
+(s',t',u')=(zs,zt,u), hence z=w and v'=v. The convolution measure dz/z,
+Born scaling B_D(zs,v)=B_D(s,v)/z, and delta(1-w/z) give B_D(s,v)/w.
+For incoming b, (s',t',u')=(zs,t,zu), hence z=(1-v)/(1-vw), v'=vw.
+The absolute inverse derivative of 1-w'(z) at the zero is z^2 vw/(1-v).
+Together with dz/z and Born scaling 1/z this gives B_D(s,vw)vw/(1-v).
+For outgoing c, (s',t',u')=(s,t/z,u/z), hence z=1-v+vw and v'=vw/z.
+The inverse Born-delta derivative is vw and the fragmentation measure is
+dz z^(2-D), giving the density below.
+
+The resulting three maps and densities are
+
+ incoming a: z=w; W=B_D(s,v)/w;
+ incoming b: z=(1-v)/(1-vw); W=B_D(s,vw) vw/(1-v);
+ outgoing c: z=1-v+vw; W=vw/z^2 B_D(s,vw/z) z^(2epsilon).
+
+For the outgoing leg, the D-dimensional fragmentation factor is z^(2-D),
+namely z^(-2+2epsilon). After the z^-2 factor is included in W, the residual
+factor is z^(+2epsilon). Its derivative gives +2 log(z) B_0, not -2 log(z).
+
+Define A(w,epsilon)=W(w,epsilon)(1-w)/(1-z(w)), A1=A(1,epsilon).
+Using an analytic regulator eta in the original splitting variable,
+ (1-z)^(-1+eta)=delta(1-z)/eta+[1/(1-z)]_+ +O(eta),
+and 1-z(w)=z'(1)(1-w)+O((1-w)^2), the pushforward is
+
+ ordinary: r(z(w))W(w)+c[A(w)-A1]/(1-w),
+ D0:       c A1,
+ D1:       0,
+ delta:    [d+c log z'(1)]A1.
+
+This single identity implements all three legs; there are no separate copied
+route-specific tuples. The endpoint slopes are 1, v/(1-v), v respectively.
+The endpoint logarithms follow from the kernel's original plus prescription
+over 0<z<1, including the part below the physical z lower bound.
+
+Transversity kernel: CF[-2+2/(1-z)_++3/2 delta(1-z)], with no gluon or flavour
+mixing. The unpolarized second incoming leg uses the usual qq,gq,qg,gg kernels.
+Quark flavour sums use Nf-1 only when the other flavour is not externally fixed.
+Charge-conjugate channels have the same Born tensor and are explicitly mapped.
+
+Multiply each collinear distribution by
+ alpha_s/(2pi epsilon) exp[epsilon(log4pi-gamma_E+log(mu_R^2/mu_leg^2))]
+and extract its epsilon^-1 and epsilon^0 coefficients, so evanescent Born terms
+enter the finite remainder. Coupling renormalization replaces the distribution
+by -beta0 B_D delta, beta0=(11CA-2Nf)/3, with scale mu_leg=mu_R.
+
+Real-emission endpoint derivation. Introduce h=1-w. Each noninteger power
+base(h)^q is factored by its endpoint valuation m into h^(m q)a(h)^q,
+a(h)=base(h)/h^m with a(0) nonzero. The regulator slope in h is therefore
+known algebraically without changing the original numerator dimension D.
+For each branch h^(-1-lambda epsilon)B(h,epsilon), subtract the endpoint
+of a smooth test function before expanding in epsilon. The endpoint integral
+is int_0^1 dh h^(-1-lambda epsilon)=-1/(lambda epsilon).
+Writing B=b[-1]/epsilon+b[0]+epsilon b[1], the distribution coefficients are
+
+ epsilon^-2 delta: -b[-1](0)/lambda;
+ epsilon^-1: ordinary [b[-1](h)-b[-1](0)]/h,
+             D0 b[-1](0), delta -b[0](0)/lambda;
+ finite: ordinary {b[0](h)-b[0](0)
+                    -lambda[b[-1](h)-b[-1](0)]log h}/h,
+         D0 b[0](0), D1 -lambda b[-1](0), delta -b[1](0)/lambda.
+
+The program obtains the branches using endpoint valuations, expands them with
+this test-function subtraction, and inserts the shared master functions only
+after the distribution coefficients are built. It compares real terms,
+virtual normalization, every counterterm component, both pole coefficients,
+and the final regular/D0/D1/delta coefficients against the stored results.
+It also compares the independently assembled XX and NN finite coefficients
+after applying CF=(CA^2-1)/(2CA). Generic logarithm identities use factorwise
+real-sign proofs; an uncertified factor or nonpositive total argument leaves
+the original logarithm intact. No unconditional power/log expansion is used.
+
+Sensitivity tests perturb each finite basis coefficient in both components of
+every class. In class 1 they also rebuild the actual counterterms with the
+evanescent Born terms omitted, or the fragmentation epsilon factor omitted,
+and require the same acceptance predicate to reject the altered result.
+Separate small analytic controls exercise the corresponding generic terms. An additional
+direct integral in the original splitting variable checks the pullback for
+all three kinematic maps against polynomial test functions. These are
+validation tests, not numerical cross-section predictions.
+The elementary Integrate calls check splitting-kernel distribution identities
+against test functions. They do not integrate real-emission phase space or
+replace the reverse-unitarity/IBP/master-integral calculation supplying Reduced.

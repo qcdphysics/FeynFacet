@@ -1,0 +1,663 @@
+(* ::Title:: *)
+(*Transverse spin transfer in proton-proton collisions, step 2 (Tracer route): spin and colour algebra*)
+
+
+(* ::Text:: *)
+(*Same task, same input and same output as 2-Algebra-FeynCalc.wl; read its introduction first: it defines the four parts of the output (Born, Virtual, Real and the D-dimensional transfer Born table BornTable), the density pa-slash gamma5 s_a-slash/2 of the polarized incoming parton a, the projection p-slash gamma5 s_c-slash of the observed parton c, the in-plane axes eX (of a) and eC (of c) and the normal n, the four components XX, NN, XN, NX of which XX and NN are kept, the reduction of the normal components of the unobserved and loop momenta, and the invariants s, t, u, A, B, C, spe3.  Here the Dirac and Lorentz algebra is done by the classic Tracer package (M. Jamin and M. E. Lautenbacher, Comput. Phys. Commun. 74 (1993) 265) and the colour algebra by the explicit SU(N) reduction of Processes/Hadronic/2-Algebra-Tracer.wl, whose squaring machinery (records -> Tracer words, colour separation, products i <= j, closing of the fermion lines, polarization sums before the traces, parallel kernels) is taken over unchanged, as in Processes/HadronicTT/2-Algebra-Tracer.wl; read the Hadronic file for Tracer's vocabulary and for the method.  Input: the amplitude records of step 1 (Results/class-<n>/Amplitudes.wl, key "Records", including the records of the transfer Born channels).  Output: Results/Tracer/class-<n>/Algebra.wl, which the last cell compares exactly with Results/FeynCalc/class-<n>/Algebra.wl.  Run this file in a fresh kernel: Tracer and FeynCalc cannot be loaded together.*)
+(**)
+(*What differs from the unpolarized and longitudinal classes.  (1) Two spin sums are chiral-odd: at the polarized incoming parton a the density pa-slash gamma5 s_a-slash/2 (the same expression for a quark and for an antiquark, docs/TRANSVERSE-PP.md; class 17 has an incoming antiquark), and at the observed parton c the projection p-slash gamma5 s_c-slash (no 1/2; the same for an observed quark and antiquark, class 10).  Both are inserted in Tracer as the string q, G5, s when a fermion line is closed at the spinor of momentum q = pa or p; the 1/2 of the density is part of the average, as in the FeynCalc route.  (2) The spin vectors are Tracer vectors of their own: the unnormalized in-plane axes eX = (u/s) pa + (t/s) pb + p (orthogonal to the beams) and eC = -u/(t+u) pa + t/(t+u) pb - s (u-t)/(t+u)^2 p (orthogonal to p and to pa + pb), with eX^2 = -t u/s and eC^2 = -s t u/(t+u)^2, and the normal nn with nn.pa = nn.pb = nn.p = 0, nn.nn = -1, nn.eX = nn.eC = 0.  The XX component is divided by the product of the axis lengths -t u/(t+u) afterwards, exactly as in the FeynCalc route.  Their scalar products with every momentum are declared with the kinematics: eX.x and eC.x follow from the definitions, and the normal components nn.k1 = nk1 = -nn.k2 (real emission; nn.k1 = 0 in the Born kinematics, where k1 = pa + pb - p lies in the plane) and nn.loop = nl (one loop) stay symbolic until the normal reductions, which are those of the FeynCalc route: (nn.k1)^2 = k1par^2 + spe3 with the odd powers dropped, and in the loop the symmetric integration over the (D-3)-dimensional space orthogonal to the scattering plane.  All axes are four-dimensional (H = 0), as the HVBM scheme requires of spin vectors.  (3) The four components are computed as four spin cases of the same jobs, and the checks of the FeynCalc route are repeated: XN = NX = 0 for the Born square, the virtual interference, the real emission and every table entry, the transfer Born table against the literature, charge conjugation and Processes/Collins' resolved Born table, the class's Born against its table entry, and the gauge invariance of the real emission.*)
+(**)
+(*Tracer's gamma5 and epsilon tensor have the opposite sign to FeynCalc's (gamma5 = (i/4!) eps gamma gamma gamma gamma, Tr[gamma5 a b c d] = +4 i Eps[a, b, c, d]).  Every projected square contains exactly two gamma5's, one from the density of a and one from the projection of c: either both sit in one trace (a and c on one fermion line) and meet, producing no epsilon tensor, or each sits in one of two traces (the interference of an annihilation graph with an exchange graph, classes 6, 10, 11, 17) and the two epsilon tensors are contracted into scalar products by Tracer as soon as the traces are multiplied.  The sign of Eps therefore drops out of every result, which is tested where it would show: the Born table against the lowest-order transfer cross sections of the literature and the exact comparison with the FeynCalc route at the end.*)
+
+
+(* ::Section:: *)
+(*Load*)
+
+
+(* ::Text:: *)
+(*The FeynFacet package (file locations, the record format, the checks Require[...]) and then Tracer, which redefines Dot and NonCommutativeMultiply on startup; LoadTracer restores them.*)
+
+
+(* ::Input:: *)
+Get[FileNameJoin[{NotebookDirectory[], "..", "..", "FeynFacet", "FeynFacet.wl"}]]
+
+
+(* ::Text:: *)
+(*Tracer itself (Tracer.m, located by FeynFacet's tool lookup).*)
+
+
+(* ::Input:: *)
+LoadTracer[]
+
+
+(* ::Text:: *)
+(*Choices: the class (1, 3, 6, 10, 11, 13, 17); the number of parallel kernels for the squares ("auto" = one per processor core, at most 8; "1" = none); and whether the pair files of an earlier run of this same, unchanged file may be reused ("no" recomputes everything; "yes" only continues an interrupted run: a product file is reused only if its companion file <name>.input holds the fingerprint of the current inputs, the amplitudes of step 1 and this step file; a file written for other inputs, or without that companion (for example, after an interrupted write), is computed again).*)
+(**)
+(*The records were written in step 1 by a kernel with FeynCalc loaded, in which the number of light flavours is FeynCalc's symbol Nf (context FeynCalc`); it is renamed to the plain symbol Nf of the FeynCalc route's output.  Tracer is set to D dimensions with the HVBM gamma5 (AntiCommute[off]: gamma5 anticommutes with the four-dimensional gamma matrices and commutes with the hatted ones), and the lines 1, 2, 3 are declared traces: lines 1 and 2 for the (at most two) traces formed by closing the open quark lines of an interference, line 3 for a closed quark loop of a one-loop graph.*)
+
+
+(* ::Input:: *)
+class = "1";
+workers = "auto";
+resume = "no";
+loaded = LoadAmplitudes["class-" <> class];
+plainNf = Thread[Select[Union[Cases[loaded, _Symbol, Infinity, Heads -> True]], SymbolName[#] === "Nf" && Context[#] =!= "Global`" &] -> Nf];
+records = loaded["Records"] /. plainNf; spec = loaded["Spec"] /. plainNf; weights = loaded["Weights"] /. plainNf;
+VectorDimension[D];
+AntiCommute[off];
+Spur[1, 2, 3];
+spec
+
+
+(* ::Text:: *)
+(*The first record of the first diagram of each part, as an example of the input: a coefficient (couplings, colour factors ColorT, ColorF, ColorDelta, GluonDelta, propagators Den[q] = 1/q^2, metric tensors, momentum components, polarization vectors PolVector[l, mu, +1 incoming / -1 outgoing]) and the open fermion chains Chain[Ubar or Vbar, gamma matrices, Uspinor or Vspinor].  A one-loop record with a closed quark loop also has "Traces".  The amplitudes contain no gamma5 (the gamma5's of the density and of the projection are inserted below), which the complex conjugation of a gamma string by reversal relies on.  The records of the transfer Born channels (key "BornTable", generated by FeynArts in step 1 like the class's own diagrams) are squared below with the same machinery.*)
+
+
+(* ::Input:: *)
+Require[FreeQ[records, GammaFive], "A record contains gamma5; the conjugation below does not handle it"];
+Require[KeyExistsQ[records, "BornTable"] && Length[records["BornTable"]] > 0, "The records of the transfer Born channels are missing: rerun step 1"];
+ShowRecords[Join[If[records["Born"] === {}, {}, {records["Born"][[1, 1]]}], {First[First[records["Real"]]][[1]]}]]
+
+
+(* ::Section:: *)
+(*Conventions*)
+
+
+(* ::Text:: *)
+(*The polarized parton a must be a quark or an antiquark (a gluon has no transversity); b is a quark, an antiquark or a gluon.  Averages as in the FeynCalc route: a quark or antiquark is averaged with 1/(2 Nc) (for a this is the 1/2 of its density and the colour average), a gluon with 1/((D-2)(Nc^2-1)) (physical polarization sum and colour); the average depends on the two incoming partons, which differ between the class and the channels of the Born table.  colourFactors writes the result with CA = Nc and CF = (Nc^2-1)/(2 Nc).  The spin axes of a and c for each component: {eX, eC} for XX, {nn, nn} for NN, {eX, nn} for XN and {nn, eC} for NX; the XX component is divided by the product of the axis lengths |eX| |eC| = -t u/(t+u) (t, u < 0), the NN component by nothing, and the mixed components are only checked to vanish.*)
+
+
+(* ::Input:: *)
+incoming = (spec["Born"] /. None -> spec["Real"][[1, 1]])[[1 ;; 2]];       (* the two incoming partons *)
+Require[incoming[[1]] =!= "g", "The polarized parton a must be a quark or an antiquark"];
+components = {"XX", "NN", "XN", "NX"};
+outputSpins = {"XX", "NN"};
+spinAxes = <|"XX" -> <|pa -> eX, p -> eC|>, "NN" -> <|pa -> nn, p -> nn|>, "XN" -> <|pa -> eX, p -> nn|>, "NX" -> <|pa -> nn, p -> eC|>|>;     (* {s_a, s_c} of the four components *)
+axisLengths = -t u/(t + u);                                                                        (* |eX| |eC| = sqrt(eX^2 eC^2), t, u < 0 *)
+normalization[spinCase_] := If[spinCase === "XX", 1/axisLengths, 1];
+average[in_List] := Times @@ (Switch[in[[#]], "g", 1/(D - 2)/(Nc^2 - 1), _, 1/(2 Nc)] & /@ {1, 2});
+colourFactors[expr_] := Factor[expr] /. (-1 + Nc) (1 + Nc) -> 2 Nc CF /. Nc -> CA;
+{incoming, average[incoming]}
+
+
+(* ::Text:: *)
+(*Kinematics are installed by functions, because every parallel kernel installs them for each job; they are always called inside Internal`InheritedBlock[{S, H}, ...], which keeps the declared scalar products local to one job while retaining Tracer's own rules for S and H.  The physical momenta pa, pb, p and the three spin axes have no hatted components (H = 0; H is also made linear, since Tracer leaves H of a momentum sum unexpanded).  In the real emission the unobserved k1 and k2 have the hatted products H[k1, k1] = H[k2, k2] = -H[k1, k2] = spe3 (k1hat = -k2hat, since the physical momenta have no hatted parts); in the Born and one-loop kinematics k1 is four-dimensional too, and the loop momentum keeps its hatted part, H[loop, loop] = loopHat2 (see the one-loop section).  Inside the amplitudes k1 = pa + pb - p (Born and one loop) and k2 = pa + pb - p - k1 (real) are eliminated, except in the spinors, whose spin sums give the slashed momentum itself.*)
+(**)
+(*The scalar products are kept as lists {x, y, x.y} (productOf reads one in either order), from which the products of the axes are built: eX.x and eC.x from the coefficients of the axes on the basis {pa, pb, p} for every momentum x, the products among the axes from those of pa, pb, p; nn.pa = nn.pb = nn.p = 0, nn.nn = -1, nn.eX = nn.eC = 0, and the normal components of the unobserved momenta are given explicitly (nn.k1 = 0 in the Born kinematics; nn.k1 = nk1, nn.k2 = -nk1 in the real kinematics).  The loop momentum of the one-loop graphs has eX.loop and eC.loop as the same combinations of loop.pa, loop.pb, loop.p and the symbolic normal component nn.loop = nl.  A check that the axes are what the introduction says: eX.pa = eX.pb = 0, eC.p = 0, eC.(pa + pb) = 0, eX.eX = -t u/s, eC.eC = -s t u/(t+u)^2, nn.eX = nn.eC = 0, nn.nn = -1, and no hatted components.*)
+
+
+(* ::Input:: *)
+declare[products_List] := (Unprotect[S]; Scan[(S[#[[1]], #[[2]]] = #[[3]]) &, products]; Protect[S]);
+fourDimensional[momenta_List] := (Unprotect[H];
+  H[x_, y_Plus] := H[x, #] & /@ y; H[x_Plus, y_] := H[#, y] & /@ x;
+  H[x_, c_?NumericQ y_] := c H[x, y]; H[c_?NumericQ x_, y_] := c H[x, y];
+  Scan[(H[#] = 0; H[#, _] = 0) &, momenta]; Protect[H]);
+productOf[products_, x_, y_] := FirstCase[products, {x, y, v_} | {y, x, v_} :> v, 0];
+bornProducts = {{pa, pa, 0}, {pb, pb, 0}, {p, p, 0}, {k1, k1, 0}, {pa, pb, s/2}, {pa, p, -t/2}, {pb, p, -u/2}, {pa, k1, -u/2}, {pb, k1, -t/2}, {p, k1, s/2}};
+realProducts = {{pa, pa, 0}, {pb, pb, 0}, {p, p, 0}, {k1, k1, 0}, {k2, k2, 0}, {pa, pb, s/2}, {pa, p, -t/2}, {pb, p, -u/2},
+  {pa, k1, -A/2}, {pb, k1, -B/2}, {p, k1, C/2}, {pa, k2, (s + t + A)/2}, {pb, k2, (s + u + B)/2}, {p, k2, (-t - u - C)/2}, {k1, k2, (s + t + u)/2}};
+axisCoefficients = <|eX -> {u/s, t/s, 1}, eC -> {-u/(t + u), t/(t + u), -s (u - t)/(t + u)^2}|>;    (* on the basis {pa, pb, p} *)
+axes = {eX, eC};
+axisProducts[products_, momenta_List, normalComponents_List] := Module[{base = {pa, pb, p}, c = axisCoefficients},
+  Join[Flatten[Table[{axis, x, Factor[Sum[c[axis][[i]] productOf[products, base[[i]], x], {i, 3}]]}, {axis, axes}, {x, momenta}], 1],
+    Table[{pair[[1]], pair[[2]], Factor[Sum[c[pair[[1]]][[i]] c[pair[[2]]][[j]] productOf[products, base[[i]], base[[j]]], {i, 3}, {j, 3}]]}, {pair, {{eX, eX}, {eC, eC}, {eX, eC}}}],
+    {{eX, nn, 0}, {eC, nn, 0}, {nn, nn, -1}}, Table[{nn, x, 0}, {x, base}], normalComponents]];
+bornKinematics := (fourDimensional[{pa, pb, p, k1, eX, eC, nn}];
+  declare[Join[bornProducts, axisProducts[bornProducts, {pa, pb, p, k1}, {{nn, k1, 0}}],
+    Table[{axis, loop, axisCoefficients[axis] . {S[loop, pa], S[loop, pb], S[loop, p]}}, {axis, axes}], {{nn, loop, nl}}]]);
+realKinematics := (fourDimensional[{pa, pb, p, eX, eC, nn}];
+  Unprotect[H]; H[k1, k1] = spe3; H[k2, k2] = spe3; H[k1, k2] = -spe3; Protect[H];
+  declare[Join[realProducts, axisProducts[realProducts, {pa, pb, p, k1, k2}, {{nn, k1, nk1}, {nn, k2, -nk1}}]]]);
+installKinematics[name_] := If[name === "Born", bornKinematics, realKinematics];
+bornConservation = k1 -> pa + pb - p;
+realConservation = k2 -> pa + pb - p - k1;
+conservedMomentum[rule_][q_] := Expand[q /. rule];      (* the map of momenta inside an amplitude: eliminate k1 or k2 *)
+epsHead = Head[Eps[a1, a2, a3, a4]];          (* Tracer's internal head of the epsilon tensor *)
+axisCheck = Internal`InheritedBlock[{S, H}, bornKinematics;
+  Simplify[{S[eX, pa], S[eX, pb], S[eC, p], S[eC, pa] + S[eC, pb], S[eX, eX] + t u/s, S[eC, eC] + s t u/(t + u)^2, S[nn, eX], S[nn, eC], S[nn, nn] + 1,
+    H[eX, k1], H[eC, loop], H[nn, loop]}]];
+Require[axisCheck === {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, "The axes or the normal are not what the text says", axisCheck];
+"axes checked"
+
+
+(* ::Section:: *)
+(*Colour: an explicit SU(N) reduction*)
+
+
+(* ::Text:: *)
+(*The colour factor of an interference is a closed colour network: the colour structure of a term of the amplitude times the complex conjugate of a colour structure of the other amplitude, all indices summed.  It is reduced with three identities, in the normalization Tr(T^a T^b) = delta^{ab}/2 of the FeynCalc route:*)
+(**)
+(*  (1) structure constants as traces:  f^{abc} = -2 i ( Tr[T^a T^b T^c] - Tr[T^b T^a T^c] )   (from [T^a, T^b] = i f^{abc} T^c);*)
+(*  (2) the Fierz identity, which removes a summed gluon index:  (T^a)_{ij} (T^a)_{kl} = 1/2 ( delta_{il} delta_{kj} - delta_{ij} delta_{kl}/Nc );*)
+(*  (3) closed loops:  delta_{ii} = Nc,  Tr[T^a] = 0,  and delta^{aa} = Nc^2 - 1 for a gluon delta.*)
+(**)
+(*Notation: generators[{a, b, ...}, i, j] = (T^a T^b ...)_{ij} is a string of generators between the quark colours i and j (generators[{}, i, j] = delta_{ij}; a closed trace Tr[T^a T^b ...] is a string whose two ends carry the same summed index); adjointDelta[a, b] = delta^{ab}.  A network is first written in these objects: each ColorT is a string, each ColorDelta an empty string, each GluonDelta an adjointDelta, and each ColorF becomes, by (1), the difference of two closed traces with new summed quark indices (fresh names, one pair for every f, also when the same f occurs twice as f^{abc} f^{abc}).  Then the following rules are applied until nothing changes:*)
+(**)
+(*  adjoint deltas: delta^{aa} = Nc^2 - 1, delta^{ab} delta^{ab} = Nc^2 - 1, delta^{ab} delta^{bc} = delta^{ac}, and delta^{ab} inside a string renames b to a;*)
+(*  closed loops (3): generators[{}, i, i] = Nc, generators[{a}, i, i] = 0, delta_{ij} delta_{ij} = Nc;*)
+(*  joining: a delta_{ij} next to a string renames the index; two strings that share a quark index j, (X)_{ij} (Y)_{jk} = (X Y)_{ik}, are joined into one;*)
+(*  the Fierz identity (2), for a gluon index a that occurs twice in one string or once in each of two strings:*)
+(*     generators[{X, a, Y, a, Z}, i, j] = 1/2 ( Tr[Y] generators[{X, Z}, i, j] - generators[{X, Y, Z}, i, j]/Nc ),*)
+(*     generators[{X, a, Y}, i, j] generators[{U, a, V}, k, l] = 1/2 ( generators[{X, V}, i, l] generators[{U, Y}, k, j] - generators[{X, Y}, i, j] generators[{U, V}, k, l]/Nc ).*)
+(**)
+(*Every application of (2) removes one gluon index, so the reduction ends with a polynomial in Nc and 1/Nc; a network that still contains a colour object afterwards is reported as a failure.  The complex conjugate of a colour structure transposes the generators, (T^a T^b)_{ij}^* = (T^b T^a)_{ji} (f and the deltas are real), and renames the indices summed inside it so that they cannot coincide with those of the amplitude.  Each distinct network is evaluated once and remembered (colourCache); networks that differ only by the names of their summed indices are recognized by a canonical renaming: the factors are sorted by their shape with the indices blanked out, and the indices are then numbered colour1, colour2, ... in order of first appearance.*)
+
+
+(* ::Input:: *)
+colourHeads = ColorT | ColorF | ColorDelta | GluonDelta;
+factorList[term_] := Flatten[Replace[If[Head[term] === Times, List @@ term, {term}], Power[x_, n_Integer?Positive] :> ConstantArray[x, n], {1}]];
+termList[expr_] := If[Head[expr] === Plus, List @@ expr, {expr}];
+colourIndices[colour_] := Flatten[factorList[colour] /. {ColorT[l_List, i_, j_] :> {l, i, j}, (ColorF | ColorDelta | GluonDelta)[x__] :> {x}, _?NumericQ -> {}}];
+internalColour[colour_] := Select[Tally[colourIndices[colour]], #[[2]] > 1 &][[All, 1]];      (* the indices summed inside one colour structure *)
+conjugateColour[colour_] := colour /. Thread[internalColour[colour] -> (Symbol["c" <> SymbolName[#]] & /@ internalColour[colour])] /.
+  ColorT[l_List, i_, j_] :> ColorT[Reverse[l], j, i];
+
+(* canonical names: factors sorted by shape (indices blanked), then indices numbered by first appearance *)
+canonicalColour[network_] := Module[{factors = factorList[network], sorted, order},
+  sorted = SortBy[factors, {ToString[# /. {ColorT[l_, _, _] :> ColorT[Length[l], 0, 0], (h : ColorF | ColorDelta | GluonDelta)[x__] :> h[]}] &, ToString}];
+  order = DeleteDuplicates[Flatten[colourIndices /@ sorted]];
+  Times @@ sorted /. Thread[order -> Table[Symbol["colour" <> ToString[n]], {n, Length[order]}]]];
+
+(* a network in generator strings; identity (1) for every f, factor by factor, so that each copy of a repeated f gets its own fresh indices *)
+freshIndex[] := Unique["x"];
+SetAttributes[adjointDelta, Orderless];
+toGeneratorStrings[network_] := Times @@ (Replace[#, {ColorT[l_List, i_, j_] :> generators[l, i, j], ColorDelta[i_, j_] :> generators[{}, i, j], GluonDelta[a_, b_] :> adjointDelta[a, b],
+  ColorF[a_, b_, c_] :> With[{x = freshIndex[], y = freshIndex[]}, -2 I (generators[{a, b, c}, x, x] - generators[{b, a, c}, y, y])]}] & /@ factorList[network]);
+(* the reduction rules, in the order of the text above *)
+colourRules = {
+  adjointDelta[a_, a_] :> Nc^2 - 1, adjointDelta[a_, b_]^2 :> Nc^2 - 1,
+  adjointDelta[a_, b_] adjointDelta[b_, c_] :> adjointDelta[a, c],
+  adjointDelta[a_, b_] generators[{x___, b_, y___}, i_, j_] :> generators[{x, a, y}, i, j],
+  generators[{}, i_, i_] :> Nc, generators[{_}, i_, i_] :> 0, generators[{}, i_, j_]^2 :> Nc,
+  generators[{}, i_, j_] generators[l_, i_, k_] :> generators[l, j, k], generators[{}, i_, j_] generators[l_, k_, j_] :> generators[l, k, i],
+  generators[l1_, i_, j_] generators[l2_, j_, k_] :> generators[Join[l1, l2], i, k],
+  generators[{x1___, a_, x2___, a_, x3___}, i_, j_] :> With[{z = freshIndex[]}, 1/2 (generators[{x2}, z, z] generators[{x1, x3}, i, j] - generators[{x1, x2, x3}, i, j]/Nc)],
+  generators[{x1___, a_, x2___}, i_, j_] generators[{y1___, a_, y2___}, k_, l_] :>
+    1/2 (generators[{x1, y2}, i, l] generators[{y1, x2}, k, j] - generators[{x1, x2}, i, j] generators[{y1, y2}, k, l]/Nc)};
+colourCache = <||>;
+colourValue[network_] := Module[{key = canonicalColour[network], value},
+  If[KeyExistsQ[colourCache, key], Return[colourCache[key]]];
+  value = Factor[FixedPoint[Expand[# /. colourRules] &, Expand[toGeneratorStrings[key]]]];
+  If[!FreeQ[value, generators | adjointDelta | colourHeads], Return[Failure["Colour", <|"Network" -> key, "Value" -> value|>]]];
+  colourCache[key] = value];
+(* the colour sum of an amplitude structure c1 times the complex conjugate of c2 *)
+colourSum[c1_, c2_] := colourValue[c1 conjugateColour[c2]];
+"colour reduction defined"
+
+
+(* ::Text:: *)
+(*Checks of the reduction on known colour sums (CF = (Nc^2-1)/(2 Nc)): Tr(T^a T^a) = CF Nc; f^{abc} f^{abc} = Nc (Nc^2-1); (T^a T^b)_{ij} ((T^a T^b)_{ij})^* = CF^2 Nc; (T^a T^b)_{ij} ((T^b T^a)_{ij})^* = -CF/2; f^{abc} (T^c)_{ij} ((T^a T^b)_{ij})^* = f^{abc} Tr[T^c T^b T^a] = -(i/4) f^{abc} f^{abc} = -i Nc (Nc^2-1)/4, which tests the sign of identity (1); the closed loop f^{a1 b1 c1} f^{a1 b2 c2} f^{b1 b2 d} f^{c1 c2 d} = Nc^2 (Nc^2-1)/2; and f^{z1 z2 z3} f^{z1 z2 z3}, which differs from the second network only by the names of its indices and must be found in the cache (the number of cached networks must not grow).  The full test of the colour algebra is the Born table below, against the literature and the FeynCalc route.*)
+
+
+(* ::Input:: *)
+colourTests = {
+  colourSum[ColorT[{a1}, i1, i2], ColorT[{a1}, i1, i2]] - (Nc^2 - 1)/2,
+  colourSum[ColorF[a1, a2, a3], ColorF[a1, a2, a3]] - Nc (Nc^2 - 1),
+  colourSum[ColorT[{a1, a2}, i1, i2], ColorT[{a1, a2}, i1, i2]] - Nc ((Nc^2 - 1)/(2 Nc))^2,
+  colourSum[ColorT[{a1, a2}, i1, i2], ColorT[{a2, a1}, i1, i2]] + (Nc^2 - 1)/(4 Nc),
+  colourSum[ColorF[a1, a2, b] ColorT[{b}, i1, i2], ColorT[{a1, a2}, i1, i2]] + I Nc (Nc^2 - 1)/4,
+  colourValue[ColorF[a1, b1, c1] ColorF[a1, b2, c2] ColorF[b1, b2, d] ColorF[c1, c2, d]] - Nc^2 (Nc^2 - 1)/2};
+cacheSize = Length[colourCache];
+colourValue[ColorF[z1, z2, z3] ColorF[z1, z2, z3]];
+Require[Simplify[colourTests] === {0, 0, 0, 0, 0, 0} && Length[colourCache] === cacheSize, "The colour reduction fails a known colour sum", colourTests];
+colourTests
+
+
+(* ::Section:: *)
+(*From records to Tracer expressions*)
+
+
+(* ::Text:: *)
+(*Each record becomes a Tracer expression: Metric[mu, nu] -> S[{mu}, {nu}], MomentumComponent[q, mu] -> S[q, {mu}], PolVector[l, mu, _] -> S[e_l, {mu}] with a vector e_l for the polarization of the gluon l (named epb, ep, ek1, ek2; in the complex-conjugate amplitude epbStar, ...), Den[q] -> 1/S[q, q] for a tree propagator (evaluated with the installed kinematics) or 1/DjOf[q] for a propagator that carries the loop momentum (see the one-loop section).  An open fermion chain ubar(a) W u(b) becomes the inert object word[a, W..., b], with the spinor momenta at its ends and W the Tracer arguments ({mu} for gamma^mu, the momentum q for q-slash).  A closed quark loop becomes G[3, ...], a trace that Tracer evaluates at once, times its other factors.  The momenta inside the amplitude go through the map mom (momentum conservation, and for a one-loop graph also the shift of the loop momentum).  Because the record's factors are multiplied out, Tracer contracts every index summed inside the amplitude: indices of the metric tensors and momentum components disappear, and those attached to a fermion chain move into its word.*)
+
+
+(* ::Input:: *)
+polarization[l_] := Symbol["e" <> ToString[l]];
+polarizationStar[l_] := Symbol["e" <> ToString[l] <> "Star"];
+spinorMomentum[(Ubar | Vbar | Uspinor | Vspinor)[q_]] := q;
+tracerArgument[GammaMatrix[i_], mom_] := {i};
+tracerArgument[Slash[q_], mom_] := mom[q];
+propagator[q_] := If[FreeQ[q, loop], 1/S[q, q], 1/DjOf[q]];
+closedLoop[pieces_List, mom_] := Module[{gammas = Select[pieces, MatchQ[#, _GammaMatrix | _Slash] &]},
+  (Times @@ Select[pieces, !MatchQ[#, _GammaMatrix | _Slash] &]) If[gammas === {}, 1, G @@ Join[{3}, tracerArgument[#, mom] & /@ gammas]]];
+convert[record_, mom_] := Module[{coefficient, words, loops},
+  coefficient = record["Coefficient"] /. {Metric[i_, j_] :> S[{i}, {j}], MomentumComponent[q_, i_] :> S[mom[q], {i}],
+    PolVector[l_, i_, _] :> S[polarization[l], {i}], Den[q_] :> propagator[mom[q]]};
+  words = Times @@ (word @@ Join[{spinorMomentum[First[#]]}, tracerArgument[#, mom] & /@ (List @@ #)[[2 ;; -2]], {spinorMomentum[Last[#]]}] & /@ record["Chains"]);
+  loops = If[KeyExistsQ[record, "Traces"], Times @@ (closedLoop[List @@ #, mom] & /@ record["Traces"]), 1];
+  Expand[coefficient words loops]];
+"conversion defined"
+
+
+(* ::Section:: *)
+(*The squaring method*)
+
+
+(* ::Text:: *)
+(*As in Processes/Hadronic (both routes), a square sum_{i,j} M_i M_j^* is not formed as one product:*)
+(**)
+(*1. Every amplitude (one diagram) is converted and simplified once, before any product, and the conditions e_l.l = 0 and e_l.r = 0 are imposed for every gluon l, where r is the reference vector of the same gluon's physical polarization sum.  For the gluon whose momentum was eliminated by momentum conservation, e_x.x = 0 is imposed in its eliminated form: x = pa + pb - p (- k1) gives e_x.q = -(the other terms) for the first momentum q of x that is not its reference vector.*)
+(*2. Colour is separated from the Lorentz algebra: each amplitude is written as sum_x c_x L_x with distinct colour structures c_x; the colour factor of c_x c_y^* is computed by colourValue above.  The complex conjugate of a Lorentz part L_y changes i -> -i, e_l -> e_lStar, renames its summed Lorentz indices, and replaces each word ubar(a) W u(b) by its complex conjugate ubar(b) W^R u(a), with W^R the gamma string in reversed order (wordBar[b, W^R..., a]; reversing is the Dirac adjoint gamma0 W^dagger gamma0 of a string of gamma^mu and slashed momenta).*)
+(*3. Only the products with i <= j are computed: for i < j, M_i M_j^* + M_j M_i^* = 2 Re(M_i M_j^*) (all invariants are real).*)
+(*4. The fermion lines are closed: in the product of the amplitude's words and the conjugate amplitude's words, the word that ends on the spinor of momentum q is followed by the conjugate word that starts there, with the spin sum in between.  This is where the transverse spins enter: at the polarized incoming parton q = pa the spin sum is the density pa-slash gamma5 s_a-slash (the string pa, G5, s_a in Tracer, with s_a the axis of a in the component being computed: eX or nn), the same for u(pa) ubar(pa) and v(pa) vbar(pa); at the observed parton q = p it is the projection p-slash gamma5 s_c-slash (the string p, G5, s_c, with s_c = eC or nn), again the same for a quark and an antiquark; at every other parton (b and the unobserved ones) it is q-slash.  One continues with the next word until the first word comes back: each closed walk is one trace, trace[line, ...], kept inert for now.  The interference has one trace (a and c on one line: two gamma5's) or two (one gamma5 each), depending on how the quark lines of the two diagrams connect.*)
+(*5. The gluon polarization sums are applied one gluon at a time, outgoing gluons first, before the traces are taken: the terms are grouped by the factors that carry that gluon's polarization vectors e_l and e_lStar; in each distinct group e_l -> {mu_l}, e_lStar -> {nu_l}, and the product with the physical density -g^{mu nu} + (l^mu r^nu + r^mu l^nu)/(l.r) is expanded once, Tracer contracting the indices, also into the inert traces (an incoming gluon b has the same physical sum, with 1/(D-2) in the average).  Contracting before tracing keeps the traces short: a contracted pair gamma^mu ... gamma_mu inside a trace is reduced by Tracer's D-dimensional contraction formulas before the trace is expanded.*)
+(*6. The traces are then evaluated (each distinct one once) and the products expanded; every remaining scalar product is a kinematic invariant, a normal component nk1 or nl, or a product of the loop momentum.  An epsilon tensor of the eliminated momentum is rewritten with momentum conservation (none is expected here, since the two epsilon tensors of two traces are contracted into scalar products; the checks below require that none is left).  The products (i, j) are independent: they run on parallel kernels, and each is written to its own file with the time it took, so that the progress is visible and an interrupted run can be continued.*)
+
+
+(* ::Input:: *)
+(* ---- 1. one amplitude, with the transversality conditions ---- *)
+transversality[references_, conservation_] := Module[{x = conservation[[1]], momenta, solved, coefficient},
+  momenta = Cases[termList[Expand[conservation[[2]]]], c_. q_Symbol :> q];
+  solved = First[DeleteCases[momenta, references[x]]];
+  coefficient[q_] := Coefficient[conservation[[2]], q];
+  {{S[polarization[x], solved] -> -Sum[coefficient[q] S[polarization[x], q], {q, DeleteCases[momenta, solved]}]/coefficient[solved]},
+   Flatten[Table[{S[polarization[l], l] -> 0, S[polarization[l], references[l]] -> 0}, {l, Keys[references]}]]}];
+prepare[diagram_, references_, conservation_, mom_] := Module[{a = Total[convert[#, mom] & /@ diagram], rules = transversality[references, conservation]},
+  Expand[Expand[a /. rules[[1]]] /. rules[[2]]]];
+
+(* ---- 2. colour separation and complex conjugation ---- *)
+colourPart[term_] := Times @@ Select[factorList[term], !FreeQ[#, colourHeads] &];
+(* {{c_x, L_x}, ...}: the distinct colour structures of an amplitude with their Lorentz parts *)
+colourGroups[amp_] := Module[{groups = GatherBy[termList[Expand[amp]], colourPart]},
+  Table[{colourPart[First[g]], Total[(#/colourPart[#]) & /@ g]}, {g, groups}]];
+lorentzIndices[expr_] := Union[Cases[expr, {i_Symbol} /; StringStartsQ[SymbolName[i], "Lor"] :> i, Infinity]];    (* FeynArts names them Lor1, Lor2, ... *)
+gluonsOf[expr_] := Union[Cases[expr, s_Symbol /; StringMatchQ[SymbolName[s], "e" ~~ ("pa" | "pb" | "p" | "k1" | "k2")] :> ToExpression[StringDrop[SymbolName[s], 1]], Infinity]];
+conjugateLorentz[lorentz_] := Module[{gluons = gluonsOf[lorentz], indices = lorentzIndices[lorentz]},
+  lorentz /. Thread[polarization /@ gluons -> polarizationStar /@ gluons] /. Thread[indices -> (Symbol["c" <> SymbolName[#]] & /@ indices)] /.
+    {Complex[x_, y_] :> Complex[x, -y], word[a_, w___, b_] :> wordBar[b, Sequence @@ Reverse[{w}], a]}];
+conjugateGroups[amp_] := {conjugateColour[#[[1]]], conjugateLorentz[#[[2]]]} & /@ colourGroups[amp];
+
+(* ---- 4. closing the fermion lines ---- *)
+(* the spin sum at the spinor of momentum q, as Tracer arguments: the density pa-slash gamma5 s_a-slash at a, the projection p-slash gamma5 s_c-slash at c, q-slash elsewhere *)
+junction[q_, spinCase_] := If[MemberQ[{pa, p}, q], {q, G5, spinAxes[spinCase][q]}, {q}];
+sew[term_, spinCase_] := Module[{factors = factorList[term], words, bars, rest, traces = {}, current, start, chain, q},
+  words = Association[#[[1]] -> # & /@ Cases[factors, _word]];          (* each word, keyed by the momentum it starts with *)
+  bars = Association[#[[1]] -> # & /@ Cases[factors, _wordBar]];        (* each conjugate word, keyed likewise *)
+  rest = Times @@ DeleteCases[factors, _word | _wordBar];
+  While[Length[words] > 0,
+    current = First[words]; start = current[[1]]; chain = {};
+    While[True,
+      KeyDropFrom[words, current[[1]]];
+      q = Last[current]; chain = Join[chain, List @@ current[[2 ;; -2]], junction[q, spinCase]];
+      Require[KeyExistsQ[bars, q], "A fermion line does not close", term];
+      current = bars[q]; q = Last[current]; chain = Join[chain, List @@ current[[2 ;; -2]], junction[q, spinCase]];
+      If[q === start, Break[]];
+      Require[KeyExistsQ[words, q], "A fermion line does not close", term];
+      current = words[q]];
+    AppendTo[traces, trace @@ Join[{Length[traces] + 1}, chain]]];
+  rest Times @@ traces];
+
+(* ---- 5. polarization sums ---- *)
+physicalSum[l_, r_] := With[{mu = {Symbol["mu" <> ToString[l]]}, nu = {Symbol["nu" <> ToString[l]]}},
+  -S[mu, nu] + (S[l, mu] S[r, nu] + S[r, mu] S[l, nu])/S[l, r]];
+tensorPart[term_, l_] := Times @@ Select[factorList[term], !FreeQ[#, polarization[l] | polarizationStar[l]] &];
+(* the contraction uses the installed scalar products, which differ between the Born and the real kinematics: the kinematics are part of the key *)
+projectionCache = <||>; currentKinematics = None;
+projectOnce[tensor_, l_, density_] := With[{key = {currentKinematics, tensor, density}},
+  If[KeyExistsQ[projectionCache, key], projectionCache[key],
+    With[{value = Expand[(tensor /. {polarization[l] -> {Symbol["mu" <> ToString[l]]}, polarizationStar[l] -> {Symbol["nu" <> ToString[l]]}}) density]},
+      If[FreeQ[tensor, trace], projectionCache[key] = value, value]]]];     (* tensors with traces are rarely repeated: not stored *)
+project[expr_, l_, density_] := If[expr === 0, 0, Module[{groups = GatherBy[termList[expr], tensorPart[#, l] &]},
+  Require[And @@ (!FreeQ[#, polarization[l]] && !FreeQ[#, polarizationStar[l]] & /@ groups[[All, 1]]), "A term lacks a polarization vector", l];
+  Expand[Total[Table[With[{tensor = tensorPart[First[g], l]}, Total[(#/tensor) & /@ g] projectOnce[tensor, l, density]], {g, groups}]]]]];
+
+(* ---- 6. traces ---- *)
+evaluateTraces[expr_] := Module[{cache = <||>},
+  Expand[expr /. trace[n_, a___] :> Lookup[cache, Key[{n, a}], cache[{n, a}] = Expand[G[n, a]]]]];
+
+(* one product (i, j): left = {{c_x, L_x}, ...} of the amplitude, right = {{c_y^*, L_y^*}, ...} of the conjugate amplitude *)
+interference[left_, right_, spinCase_, references_, conservation_] := Module[{product, gluons, expr},
+  product = Expand[Total[Flatten[Table[colourValue[x[[1]] y[[1]]] x[[2]] y[[2]], {x, left}, {y, right}]]]];
+  If[!FreeQ[product, Failure], Return[FirstCase[product, _Failure, Null, Infinity]]];
+  If[product === 0, Return[0]];          (* a graph can vanish once e_l.l = e_l.r = 0 are imposed *)
+  gluons = gluonsOf[{left[[All, 2]]}];
+  expr = Expand[Total[sew[#, spinCase] & /@ termList[product]]];
+  Do[expr = project[expr, l, physicalSum[l, references[l]]], {l, Complement[gluons, {pa, pb}]}];       (* outgoing gluons first *)
+  Do[expr = project[expr, l, physicalSum[l, references[l]]], {l, Intersection[gluons, {pa, pb}]}];
+  expr = evaluateTraces[expr];
+  (* the eliminated momentum inside a four-dimensional epsilon tensor (in the Born kinematics Eps[pa, pb, p, k1] = 0) *)
+  Expand[expr /. epsHead[x_List] :> (Eps @@ (x /. conservation))]];
+(* the real part: after expanding, every term is a number times real symbols (the denominators are real propagators), so the real part of the number is kept *)
+realPartOf[expr_] := Expand[expr] /. Complex[a_, b_] :> a;
+imaginaryPartOf[expr_] := (expr - (expr /. Complex[a_, b_] :> Complex[a, -b]))/2;
+"squaring functions defined"
+
+
+(* ::Text:: *)
+(*The normal component of the unobserved momentum k1 in the real emission, as in the FeynCalc route (normalReduction there): the interference is a polynomial in nk1 = nn.k1 of degree at most two; its odd part integrates to zero (it is odd under the reflection of the scattering plane) and nk1^2 = k1par^2 + spe3, where k1par^2 = d.G^-1.d is the square of the projection of k1 onto the plane (d the products of k1 with pa, pb, p, G their Gram matrix) and spe3 = k1hat.k1hat: k1 = k1par + k1n + k1hat with k1^2 = 0 gives (n.k1)^2 = k1par^2 + spe3.  The part odd in nk1 is returned separately (the real-emission section reports its size and drops it).  The normal component of the loop momentum is treated in the one-loop section.*)
+
+
+(* ::Input:: *)
+gramMatrix[products_] := Table[productOf[products, x, y], {x, {pa, pb, p}}, {y, {pa, pb, p}}];
+parallelSquare[d_List, gram_] := Factor[d . Inverse[gram] . d];
+normalReduction[expr_, nx_, parallel_, fourSquare_] := Module[{coefficients = CoefficientList[Expand[expr], nx]},
+  If[coefficients === {}, coefficients = {0}];                                   (* a vanishing expression (a graph can vanish exactly) *)
+  Require[Length[coefficients] <= 3, "A power of the normal component above two appeared", Length[coefficients] - 1];
+  <|"Even" -> coefficients[[1]] + If[Length[coefficients] == 3, coefficients[[3]] (parallel - fourSquare), 0],
+    "Odd" -> If[Length[coefficients] >= 2, coefficients[[2]], 0]|>];
+k1Parallel2 = parallelSquare[{productOf[realProducts, pa, k1], productOf[realProducts, pb, k1], productOf[realProducts, p, k1]}, gramMatrix[realProducts]];     (* k1par^2 = d.G^-1.d *)
+k1Parallel2
+
+
+(* ::Text:: *)
+(*Parallel kernels (choice workers above): each loads FeynFacet and Tracer (Tracer works in parallel kernels).*)
+
+
+(* ::Input:: *)
+feynFacetFile = FileNameJoin[{NotebookDirectory[], "..", "..", "FeynFacet", "FeynFacet.wl"}];
+nWorkers = If[workers === "auto", Min[$ProcessorCount, 8], ToExpression[workers]];   (* "auto": one per processor core, at most 8 *)
+If[nWorkers > 1,
+  LaunchKernels[nWorkers];
+  With[{file = feynFacetFile}, ParallelEvaluate[Get[file]; LoadTracer[]]]];
+"parallel kernels: " <> ToString[Max[1, Length[Kernels[]]]]
+
+
+(* ::Text:: *)
+(*Each parallel kernel sets the dimension, the HVBM gamma5 and the traced lines, and receives the functions above with empty caches.  A job is one product (i, j) of the squaring method for one spin component: it installs its kinematics (Born or real) inside Internal`InheritedBlock, computes the interference, and is written to Results/Tracer/class-<n>/pairs/<name>.wl with its time.  square adds the products of one square: a diagonal product as it is, a product with i < j twice its real part (step 3).  A diagonal product |M_i|^2 is real, but its epsilon-tensor terms may leave an imaginary part that vanishes only after simplification: that imaginary part is checked to be exactly zero at a rational point (checkPoint, which also gives values to the normal components nk1 and nl) and dropped.  sidesOf prepares every diagram once in the given kinematics, separates its colour, and forms its conjugate.*)
+
+
+(* ::Input:: *)
+If[nWorkers > 1,
+  ParallelEvaluate[VectorDimension[D]; AntiCommute[off]; Spur[1, 2, 3]];
+  DistributeDefinitions[declare, fourDimensional, productOf, bornProducts, realProducts, axisCoefficients, axes, axisProducts, bornKinematics, realKinematics, installKinematics, epsHead,
+    colourHeads, factorList, termList, colourIndices, internalColour, conjugateColour, canonicalColour, freshIndex, adjointDelta, toGeneratorStrings, colourRules, colourValue,
+    polarization, polarizationStar, spinAxes, junction, sew, physicalSum, tensorPart, projectOnce, project, evaluateTraces, gluonsOf, interference];
+  ParallelEvaluate[colourCache = <||>; projectionCache = <||>; currentKinematics = None]];
+pairDirectory = FileNameJoin[{ResultsDirectory["Tracer/class-" <> class], "pairs"}];
+If[!DirectoryQ[pairDirectory], CreateDirectory[pairDirectory]];
+(* the fingerprint of the inputs of the product files: the amplitudes of step 1 and this step file (see the choice resume above) *)
+inputFingerprint = InputFingerprint[loaded, {FileNameJoin[{NotebookDirectory[], "2-Algebra-Tracer.wl"}]}];
+runJob[job_] := Module[{file = FileNameJoin[{pairDirectory, job["Name"] <> ".wl"}], value, seconds},
+  If[resume === "yes" && ReusableQ[file, inputFingerprint], file,
+    {seconds, value} = AbsoluteTiming[Internal`InheritedBlock[{S, H}, installKinematics[job["Kinematics"]]; currentKinematics = job["Kinematics"];
+      interference[job["Left"], job["Right"], job["Spin"], job["References"], job["Conservation"]]]];
+    If[!FreeQ[value, Failure], value,
+      Put[<|"Name" -> job["Name"], "Value" -> value, "Seconds" -> seconds|>, file]; MarkReusable[file, inputFingerprint]]]];
+runJobs[jobs_] := Module[{files},
+  If[nWorkers > 1, DistributeDefinitions[runJob, pairDirectory, resume, inputFingerprint]];
+  files = If[nWorkers > 1, ParallelMap[runJob, jobs, Method -> "FinestGrained"], Map[runJob, jobs]];
+  Require[FreeQ[files, Failure], "A job failed", FirstCase[files, _Failure, Null, Infinity]];
+  Get /@ files];
+(* ---- 3. the pairs i <= j of a square, and their sum ---- *)
+squareJobs[name_, sides_, kinematics_, references_, conservation_, spinCase_] := Flatten[Table[
+  <|"Name" -> name <> "-" <> spinCase <> "-" <> ToString[i] <> "-" <> ToString[j], "Kinematics" -> kinematics,
+    "Left" -> sides[[1, i]], "Right" -> sides[[2, j]], "Spin" -> spinCase, "References" -> references, "Conservation" -> conservation, "Pair" -> {i, j}|>,
+  {i, Length[sides[[1]]]}, {j, i, Length[sides[[1]]]}]];
+checkPoint = {s -> 1, t -> -3/10, u -> -2/5, A -> -1/7, B -> -2/9, C -> -3/10 + 1/7 + 2/9, D -> 37/10, Nc -> 3, spe3 -> 1/11, nk1 -> 3/13, nl -> 2/13, gs -> 1, Nf -> 5};
+square[name_, sides_, kinematics_, references_, conservation_, spinCase_] := Module[{jobs = squareJobs[name, sides, kinematics, references, conservation, spinCase], results},
+  results = runJobs[jobs];
+  Require[And @@ MapThread[#2["Pair"][[1]] != #2["Pair"][[2]] || (imaginaryPartOf[#1["Value"]] /. checkPoint) === 0 &, {results, jobs}],
+    "A diagonal product has a nonzero imaginary part", name];
+  Total[MapThread[If[#2["Pair"][[1]] == #2["Pair"][[2]], realPartOf[#1["Value"]], 2 realPartOf[#1["Value"]]] &, {results, jobs}]]];
+sidesOf[diagrams_, kinematics_, references_, conservation_] := Module[{prepared},
+  prepared = Internal`InheritedBlock[{S, H}, installKinematics[kinematics];
+    prepare[#, references, conservation, conservedMomentum[conservation]] & /@ diagrams];
+  {colourGroups /@ prepared, conjugateGroups /@ prepared}];
+"jobs defined"
+
+
+(* ::Section:: *)
+(*The transfer Born table*)
+
+
+(* ::Text:: *)
+(*The D-dimensional transfer squares of the 2 -> 2 channels a^ b -> c^ of classes.wl (first parton polarized, observed parton c, u = -s-t), divided by gs^4, from the FeynArts records of step 1 (key "BornTable"), with the reference vectors pa -> pb, pb -> pa, p -> pa, k1 -> pa for the gluons and the average of the channel's own incoming partons.  All four components are formed; XN and NX must vanish; XX and NN are kept, as in the FeynCalc route.*)
+
+
+(* ::Input:: *)
+bornReferences = <|pa -> pb, pb -> pa, p -> pa, k1 -> pa|>;
+channelPartons[name_] := StringSplit[StringReplace[name, "->" -> ""]];                                (* {a, b, c} *)
+jobName[name_] := StringReplace[name, {" " -> "_", "->" -> "to"}];
+bornTableRaw = Association @ KeyValueMap[Function[{name, diagrams}, name -> Module[{sides, in = channelPartons[name][[1 ;; 2]]},
+    sides = sidesOf[diagrams, "Born", bornReferences, bornConservation];
+    Association @ Table[spinCase -> With[{sq = square["table-" <> jobName[name], sides, "Born", bornReferences, bornConservation, spinCase]},
+      Factor[colourFactors[Together[average[in] normalization[spinCase] sq/gs^4]] /. u -> -s - t]], {spinCase, components}]]],
+  records["BornTable"]];
+Require[FreeQ[bornTableRaw, Complex | S | H | epsHead | trace | word | wordBar | nn | eX | eC | nk1 | nl | gs], "A transfer Born square is not a real scalar", bornTableRaw];
+Require[And @@ Flatten[Table[bornTableRaw[name][mixed] === 0, {name, Keys[bornTableRaw]}, {mixed, {"XN", "NX"}}]],
+  "A mixed component XN or NX of a transfer Born square does not vanish", Map[KeyTake[#, {"XN", "NX"}] &, bornTableRaw]];
+bornTable = Association @ Table[spinCase -> Map[#[spinCase] &, bornTableRaw], {spinCase, outputSpins}];
+Dataset[Map[Simplify[# /. D -> 4] &, bornTable, {2}]]
+
+
+(* ::Text:: *)
+(*Checks of the table, those of the FeynCalc route.  (1) In four dimensions the two components coincide in every channel (the evanescent terms differ).  (2) The channels whose leading-order transverse spin transfer is in the literature: the Collins hard factors of F. Yuan, Phys. Rev. Lett. 100 (2008) 032003 [arXiv:0709.3272], Eq. (6), transcribed verbatim in reference/Yuan-2008-Collins-hard-factors.wl, "exactly the same as those calculated for the transverse spin transfer in the hard partonic processes" (Stratmann and Vogelsang, Phys. Lett. B295 (1992) 277; Collins, Heppelmann and Ladinsky, Nucl. Phys. B420 (1994) 565).  They are written as H = alphaS^2 Pi/s^2 x h(s,t,u); the unpolarized hard factor in the same normalization is dsigma/dt = alphaS^2 Pi/s^2 x |M|^2/gs^4 (averaged), so h is to be compared with our table directly: the first channel, q qp -> q = -K s u/t^2 with K = (Nc^2-1)/Nc^2, fixes the normalization (no free factor), and the other channels must then agree.  The q qb channels (q qb -> q, q qb -> qb) are not listed by Yuan; they are checked against charge conjugation (qb q -> q is the conjugate of q qb -> qb) and, when Processes/Collins has been run, against its independently written resolved-photon Born table (6-ResolvedBorn.wl, Results/ResolvedBorn.wl), which was compared with the paper's table.*)
+
+
+(* ::Input:: *)
+inFourDimensions[expr_] := Simplify[expr /. D -> 4 /. CA -> Nc /. CF -> (Nc^2 - 1)/(2 Nc) /. u -> -s - t];
+Require[And @@ Table[inFourDimensions[bornTable["XX"][name] - bornTable["NN"][name]] === 0, {name, Keys[bornTableRaw]}],
+  "The two transverse components of a transfer Born square differ in four dimensions"];
+Get[FileNameJoin[{NotebookDirectory[], "reference", "Yuan-2008-Collins-hard-factors.wl"}]];
+literature = YuanCollinsHardFactors[s, t, u, Nc];                         (* h(s,t,u) for the channels of Eq. (6) *)
+literatureDifferences = Association @ KeyValueMap[#1 -> inFourDimensions[bornTable["XX"][#1] - #2] &, literature];
+Require[And @@ (# === 0 & /@ Values[literatureDifferences]), "A transfer Born square differs from the literature", literatureDifferences];
+Require[inFourDimensions[bornTable["XX"]["qb q -> q"] - bornTable["XX"]["q qb -> qb"]] === 0 && Simplify[bornTable["NN"]["qb q -> q"] - bornTable["NN"]["q qb -> qb"]] === 0,
+  "The charge-conjugate channels qb q -> q and q qb -> qb differ"];
+collinsFile = FileNameJoin[{NotebookDirectory[], "..", "Collins", "Results", "ResolvedBorn.wl"}];
+collinsDifferences = If[FileExistsQ[collinsFile], With[{resolved = Get[collinsFile]["Transfer"]},
+    Association @ Table[name -> inFourDimensions[bornTable["XX"][name] - resolved[name]["Collins"]], {name, Intersection[Keys[bornTableRaw], Keys[resolved]]}]],
+  "Processes/Collins/Results/ResolvedBorn.wl not found: comparison skipped"];
+Require[!AssociationQ[collinsDifferences] || And @@ (# === 0 & /@ Values[collinsDifferences]), "A transfer Born square differs from Processes/Collins' resolved Born table", collinsDifferences];
+{literatureDifferences, collinsDifferences}
+
+
+(* ::Section:: *)
+(*Born*)
+
+
+(* ::Text:: *)
+(*The Born square of the class, in the four components, with the same reference vectors, averaged over the colours of a and the spin and colour of b, normalized (XX divided by |eX| |eC|) and written with CA, CF and u = -s - t.  XN and NX must vanish exactly; XX and NN must equal the table's entry for the class (the class's diagrams and the table's are generated separately in step 1).  No identical-particle factor: the tagged parton p is distinguished from the unobserved one.*)
+
+
+(* ::Input:: *)
+bornSides = If[records["Born"] === {}, None, sidesOf[records["Born"], "Born", bornReferences, bornConservation]];
+bornAll = If[bornSides === None, Association[# -> 0 & /@ components],
+  Association @ Table[spinCase -> With[{sq = square["born", bornSides, "Born", bornReferences, bornConservation, spinCase]},
+    Factor[colourFactors[Together[average[incoming] normalization[spinCase] sq]] /. u -> -s - t]], {spinCase, components}]];
+Require[FreeQ[bornAll, Complex | S | H | epsHead | trace | word | wordBar | nn | eX | eC | nk1 | nl], "The Born square is not a real scalar", bornAll];
+Require[bornAll["XN"] === 0 && bornAll["NX"] === 0, "A mixed component XN or NX of the Born square does not vanish", bornAll];
+born = KeyTake[bornAll, outputSpins];
+If[spec["Born"] =!= None,
+  Require[And @@ Table[Simplify[born[sc]/gs^4 - bornTable[sc][StringRiffle[spec["Born"][[1 ;; 2]], " "] <> " -> " <> spec["Born"][[3]]]] === 0, {sc, outputSpins}],
+    "The Born square differs from the transfer Born table", born]];
+born
+
+
+(* ::Section:: *)
+(*Virtual: the one-loop interference in terms of scalar integrals*)
+
+
+(* ::Text:: *)
+(*The families, the routing of the loop momentum and the reduction of the loop momentum's scalar products are those of Processes/Hadronic (both routes):*)
+(**)
+(*   VirtualST[n1,n2,n3,n4]: 1/[(loop^2)^n1 ((loop+pa)^2)^n2 ((loop+pa+pb)^2)^n3 ((loop+p)^2)^n4]   (external legs pa, pb, -pd, -p in cyclic order: invariants s and t),*)
+(*   VirtualSU: ... ((loop+pa+pb)^2)^n3 ((loop+pa+pb-p)^2)^n4   (legs pa, pb, -p, -pd: s and u),      VirtualTU: ((loop+pa)^2)^n2 ((loop+pa-p)^2)^n3 ((loop+pa-p+pb)^2)^n4   (legs pa, -p, pb, -pd: t and u),*)
+(**)
+(*with negative indices for numerators.  FeynArts routes the loop momentum differently in every graph; for every graph the routing loop -> sigma loop + delta (sigma = +-1) that maps its loop propagators onto one family is found by trying the shifts, the same search in the same order as in the FeynCalc route.*)
+
+
+(* ::Input:: *)
+families = <|
+  "VirtualST" -> {loop, loop + pa, loop + pa + pb, loop + p},                 (* legs pa, pb, -pd, -p in cyclic order: invariants s and t *)
+  "VirtualSU" -> {loop, loop + pa, loop + pa + pb, loop + pa + pb - p},       (* legs pa, pb, -p, -pd: s and u *)
+  "VirtualTU" -> {loop, loop + pa, loop + pa - p, loop + pa - p + pb}|>;      (* legs pa, -p, pb, -pd: t and u *)
+familyHeads = <|"VirtualST" -> KVirtualST, "VirtualSU" -> KVirtualSU, "VirtualTU" -> KVirtualTU|>;
+shifts = Flatten[Table[c1 pa + c2 pb + c3 p, {c1, -1, 1}, {c2, -1, 1}, {c3, -1, 1}]];
+propagatorMomenta[diagram_] := Union[Cases[diagram, Den[q_] /; !FreeQ[q, loop] :> Expand[q /. bornConservation], Infinity]];   (* the loop propagators *)
+sameUpToSign[q1_, q2_] := Expand[q1 - q2] === 0 || Expand[q1 + q2] === 0;
+(* find sigma, delta and the family such that every loop propagator of the graph, with loop -> sigma loop + delta, is one of the family's *)
+routing[diagram_] := Module[{props = propagatorMomenta[diagram], found},
+  found = Catch[Do[If[And @@ Table[Or @@ Table[sameUpToSign[q /. loop -> sigma loop + delta, f], {f, families[name]}], {q, props}],
+      Throw[{name, sigma, delta}]], {name, Keys[families]}, {sigma, {1, -1}}, {delta, shifts}]; None];
+  Require[found =!= None, "No family fits the propagators of a one-loop graph", props]; found];
+routings = routing /@ records["Virtual"];
+Counts[routings[[All, 1]]]
+
+
+(* ::Text:: *)
+(*For each graph: convert it with the map mom = (shift of the loop momentum, then k1 -> pa + pb - p), so that each loop propagator becomes 1/DjOf[q] with q one of the family's momenta up to sign (a tree propagator next to the loop is evaluated); prepare it once and separate its colour; its products with the conjugate of the summed Born amplitude are the jobs below (one per graph and spin component).*)
+(**)
+(*After the spin sums and the traces the loop momentum appears through S[loop, loop], S[loop, pa], S[loop, pb], S[loop, p] (S[loop, k1], from the spin sum of an outgoing quark k1, is rewritten with k1 = pa + pb - p), the hatted H[loop, loop] = loopHat2, and the normal component nl = nn.loop (eX.loop and eC.loop were declared as their combinations of loop.pa, loop.pb, loop.p).  Tracer's S is D-dimensional and H its (D-4)-dimensional part, so no four-dimensional product needs to be rewritten.*)
+(**)
+(*The normal component of the loop momentum is reduced exactly as in the FeynCalc route.  The integrand depends on the loop momentum through loop^2, loop.pa, loop.pb, loop.p and through its components orthogonal to the scattering plane: nl and the hatted part.  The orthogonal space has D - 3 dimensions (the direction n and the D - 4 extra dimensions, all spacelike), and the integration over its orientations is symmetric, so that with m = D - 3 and the orthogonal square loopPerp^2 = loop^2 - loopPar^2, loopPar^2 = d.G^-1.d, d = (loop.pa, loop.pb, loop.p),*)
+(**)
+(*   nl^(2a) loopHat2^b  ->  (-1)^a (loopPerp^2)^(a+b) (1/2)_a ((m-1)/2)_b / (m/2)_(a+b)     (odd powers of nl vanish),*)
+(**)
+(*the moments of a direction on the unit sphere of m dimensions.  Terms without nl keep their loopHat2 power as HatPower[b] for the dimension shift of step 3, exactly as in Processes/Hadronic.  Then the four D-dimensional products are expressed through the inverse propagators Dj of the family (the four equations loop^2 = D1, 2 loop.q_j = D_j - D_1 - q_j^2 are solved for loop^2, loop.pa, loop.pb, loop.p), and each term is read off as coefficient x family[indices] x HatPower[n].  loopHat2 shifts the dimension of the integral in step 3, not the dimension D of the coefficients.*)
+
+
+(* ::Input:: *)
+loopProducts = {L2 -> S[loop, loop], Lpa -> S[loop, pa], Lpb -> S[loop, pb], Lp -> S[loop, p]};
+inverseProps[name_] := Module[{q = families[name], sol},
+  sol = Internal`InheritedBlock[{S, H}, bornKinematics;
+    Solve[Table[Dj[j] == Expand[S[q[[j]], q[[j]]]] /. Reverse /@ loopProducts, {j, 4}] /. u -> -s - t, {L2, Lpa, Lpb, Lp}]];
+  Require[Length[sol] == 1, "Cannot express the loop scalar products through the propagators"]; First[sol]];
+loopRules[name_] := loopRules[name] = With[{sol = inverseProps[name]}, Table[(x /. loopProducts) -> (x /. sol), {x, {L2, Lpa, Lpb, Lp}}]];
+shiftedMomentum[{name_, sigma_, delta_}][q_] := Expand[q /. loop -> sigma loop + delta /. bornConservation];
+(* the orthogonal square of the loop momentum in terms of its four scalar products (Gram matrix of pa, pb, p with u = -s-t) *)
+loopPerp2 = (L2 - parallelSquare[{Lpa, Lpb, Lp}, gramMatrix[bornProducts] /. u -> -s - t]) /. loopProducts;
+perpMoment[a_, b_] := (-1)^a Pochhammer[1/2, a] Pochhammer[(D - 4)/2, b]/Pochhammer[(D - 3)/2, a + b];      (* m = D - 3 *)
+normalLoopReduction[expr_] := Module[{terms = DeleteCases[termList[Expand[expr]], 0]},
+  Total[Table[With[{a = Exponent[term, nl], b = Exponent[term, loopHat2]},
+    Which[OddQ[a], 0, a == 0, term, True, (term/(nl^a loopHat2^b)) perpMoment[a/2, b] loopPerp2^(a/2 + b)]], {term, terms}]]];
+(* the contracted interference of one graph -> sum of coefficient x family[indices] x HatPower[n] *)
+toFamilies[expr0_, name_] := Module[{expr},
+  expr = Expand[expr0 /. S[loop, k1] :> S[loop, pa + pb - p] /. H[loop, loop] -> loopHat2];
+  expr = Expand[normalLoopReduction[expr] /. loopRules[name]];
+  Require[FreeQ[expr, nl], "The normal component of the loop momentum was not reduced"];
+  Require[FreeQ[expr /. _DjOf -> 1, loop], "A product of the loop momentum was not expressed through the propagators",
+    Short[Union[Cases[expr, h_[a___] /; !FreeQ[{a}, loop] && FreeQ[h, Times | Plus | Power | DjOf], Infinity]], 8]];
+  expr = Expand[expr /. DjOf[q_] :> Dj @@ (Position[families[name], f_ /; sameUpToSign[f, q]][[1]])];
+  (* every term is a coefficient times powers of the Dj (negative for propagators, positive for numerators) and of loopHat2 *)
+  Total[Table[With[{powers = Table[Exponent[term, Dj[j]], {j, 4}], hat = Exponent[term, loopHat2]},
+    (term/(Times @@ Table[Dj[j]^powers[[j]], {j, 4}] loopHat2^hat)) familyHeads[name] @@ (-powers) HatPower[hat]], {term, DeleteCases[termList[expr], 0]}]]];
+virtualLeft = Internal`InheritedBlock[{S, H}, bornKinematics;
+  MapThread[colourGroups[prepare[#1, bornReferences, bornConservation, shiftedMomentum[#2]]] &, {records["Virtual"], routings}]];
+bornSumRight = If[records["Born"] === {}, {}, Internal`InheritedBlock[{S, H}, bornKinematics;
+  conjugateGroups[Total[prepare[#, bornReferences, bornConservation, conservedMomentum[bornConservation]] & /@ records["Born"]]]]];
+Length[virtualLeft]
+
+
+(* ::Text:: *)
+(*The interference 2 Re(M1 M0*), normalized as in the FeynCalc route.  FeynArts writes the one-loop amplitude with the measure d^D loop/(2 Pi)^D; the scalar integrals are defined with the measure d^D loop/(i Pi^(D/2)), so that M1 = i/(4 Pi)^(D/2) x (sum of coefficients c_j times integrals I_j).  The products (coefficient x M0*) formed by the spin sums are real, and*)
+(**)
+(*   2 Re(M1 M0*) = (2/(4 Pi)^(D/2)) Sum_j [i c_j M0*] Re(I_j),*)
+(**)
+(*with the real parts of the integrals in the physical region (s > 0) taken in step 3.  The association virtual below holds Sum_j [i c_j M0*] I_j for the two components, averaged and normalized, with the loop-momentum hat powers as HatPower[n]; the factor 2/(4 Pi)^(D/2) is included in step 4.  The mixed components are formed as well and must vanish.*)
+
+
+(* ::Input:: *)
+virtualJobs[spinCase_] := Table[<|"Name" -> "virtual-" <> spinCase <> "-" <> ToString[g], "Kinematics" -> "Born", "Left" -> virtualLeft[[g]],
+  "Right" -> bornSumRight, "Spin" -> spinCase, "References" -> bornReferences, "Conservation" -> bornConservation|>, {g, Length[virtualLeft]}];
+virtualAll = If[records["Virtual"] === {}, Association[# -> 0 & /@ components],
+  Association @ Table[spinCase -> Module[{results = runJobs[virtualJobs[spinCase]]},
+    Collect[I average[incoming] normalization[spinCase] Total[MapThread[toFamilies[#1["Value"], #2[[1]]] &, {results, routings}]] /. u -> -s - t,
+      {_KVirtualST, _KVirtualSU, _KVirtualTU, _HatPower}, colourFactors]], {spinCase, components}]];
+Require[FreeQ[virtualAll, Complex | S | H | epsHead | trace | nl | nn | eX | eC], "The virtual interference is not a real combination of scalar integrals", Short[virtualAll, 5]];
+Require[virtualAll["XN"] === 0 && virtualAll["NX"] === 0, "A mixed component XN or NX of the virtual interference does not vanish", KeyTake[virtualAll, {"XN", "NX"}]];
+virtual = KeyTake[virtualAll, outputSpins];
+{Length[virtual["XX"]], Length[virtual["NN"]], Union[Cases[virtual, (KVirtualST | KVirtualSU | KVirtualTU)[__], Infinity]] // Length, Union[Cases[virtual, _HatPower, Infinity]]}
+
+
+(* ::Section:: *)
+(*Real emission*)
+
+
+(* ::Text:: *)
+(*For every real-emission process of the class, the square of the sum of its diagrams for the four components, in terms of the invariants s, t, u, A, B, C, the hatted invariant spe3 and the normal component nk1; the processes are added with their weights from classes.wl, which also carry the identical-particle factors (1/2 for two identical unobserved partons; 1 when the tagged parton has an identical unobserved partner, since the two ways of tagging cancel the 1/2; Nf - 1 for a quark pair of other flavours).  Reference vectors of the physical polarization sums: pa for the gluons p and k1, pb for k2, the other incoming momentum for an incoming gluon.  Then the normal reduction: the parts odd in nk1 are dropped (they integrate to zero), nk1^2 is replaced by k1par^2 + spe3.  The mixed components must vanish; they are checked at exact rational points of all invariants (the symbolic sum of thousands of terms is not brought to a common denominator), as in the FeynCalc route.  The sum over processes is not brought to a common denominator (step 3 expands it into partial fractions anyway); the colour factors are polynomials in Nc = CA.*)
+
+
+(* ::Input:: *)
+realReferences = <|pa -> pb, pb -> pa, p -> pa, k1 -> pa, k2 -> pb|>;
+realSides = Association @ KeyValueMap[#1 -> sidesOf[#2, "Real", realReferences, realConservation] &, records["Real"]];
+realSquares = Association @ Table[spinCase -> Association @ KeyValueMap[
+    #1 -> square["real-" <> StringReplace[#1, " " -> "_"], #2, "Real", realReferences, realConservation, spinCase] &, realSides], {spinCase, components}];
+Require[FreeQ[realSquares, S | H | epsHead | trace | word | wordBar | List], "A scalar product or tensor was left in a real-emission square", Union[Cases[realSquares, _S | _H | _epsHead, Infinity]]];
+realReduced = Association @ Table[spinCase -> Association @ KeyValueMap[
+    #1 -> normalReduction[#2, nk1, k1Parallel2, -spe3] &, realSquares[spinCase]], {spinCase, components}];       (* k1_4.k1_4 = -spe3: nk1^2 = k1par^2 + spe3 *)
+realAll = Association @ Table[spinCase -> (average[incoming] normalization[spinCase] Total[KeyValueMap[weights[#1] #2["Even"] &, realReduced[spinCase]]] /. Nc -> CA), {spinCase, components}];
+Require[FreeQ[realAll, Complex], "The real-emission square is not real"];
+Require[FreeQ[realAll, nk1 | nn | eX | eC], "The normal component or an axis was left in the real-emission square"];
+{k1Parallel2, "odd parts dropped (leaf counts)" -> Map[Total[KeyValueMap[LeafCount[#2["Odd"]] &, #]] &, realReduced], LeafCount /@ realAll}
+
+
+(* ::Text:: *)
+(*The mixed components XN and NX (the coefficients of cos phi_a sin phi_c and sin phi_a cos phi_c) must vanish by parity: a single factor of the normal n cannot survive the integration over the unobserved partons.  They are evaluated exactly at random rational points of all invariants, D, CA and spe3, with C = -s4 - A - B.  Then the two output components are kept, and the real-emission square is required to be at most linear in spe3 (step 3 has the masters in D + 2 only).*)
+
+
+(* ::Input:: *)
+mixedPoints = Table[With[{v = RandomInteger[{1, 97}, 7]/RandomInteger[{98, 197}, 7]},
+  {s -> 1, t -> -v[[1]], u -> -v[[2]] (1 - v[[1]]), A -> -v[[3]], B -> -v[[4]], D -> 4 - v[[5]], CA -> 2 + 10 v[[6]], spe3 -> v[[7]]/5}], {3}];
+mixedValues = Table[Together[realAll[mixed] /. C -> -(s + t + u) - A - B /. point], {mixed, {"XN", "NX"}}, {point, mixedPoints}];
+Require[mixedValues === {{0, 0, 0}, {0, 0, 0}}, "A mixed component XN or NX of the real-emission square does not vanish", mixedValues];
+real = KeyTake[realAll, outputSpins];
+Require[Max[Exponent[#, spe3] & /@ Join[termList[Expand[real["XX"]]], termList[Expand[real["NN"]]]]] <= 1, "The real-emission square has spe3^2 terms"];
+LeafCount /@ real
+
+
+(* ::Text:: *)
+(*Check of the gauge invariance of the real-emission square: for the first process of the class and the XX component (the one without normal components), the physical polarization sums with other reference vectors (pb for p and k1, pa for k2) give the same result.  The amplitudes are prepared again, since the conditions e_l.r = 0 depend on the reference vectors.  The difference is evaluated exactly at random rational points (all invariants, D, Nc and spe3), with C = -s4 - A - B.*)
+
+
+(* ::Input:: *)
+alternativeReferences = <|pa -> pb, pb -> pa, p -> pb, k1 -> pb, k2 -> pa|>;
+firstProcess = First[Keys[records["Real"]]];
+alternative = square["gauge-" <> StringReplace[firstProcess, " " -> "_"],
+  sidesOf[records["Real"][firstProcess], "Real", alternativeReferences, realConservation], "Real", alternativeReferences, realConservation, "XX"];
+gaugePoints = Table[With[{v = RandomInteger[{1, 97}, 7]/RandomInteger[{98, 197}, 7]},
+  {s -> 1, t -> -v[[1]], u -> -v[[2]] (1 - v[[1]]), A -> -v[[3]], B -> -v[[4]], D -> 4 - v[[5]], Nc -> 2 + 10 v[[6]], spe3 -> v[[7]]/5}], {3}];
+referenceDifference = Table[Together[(alternative - realSquares["XX"][firstProcess]) /. C -> -(s + t + u) - A - B /. point], {point, gaugePoints}];
+Require[referenceDifference === {0, 0, 0}, "The real-emission square depends on the gluon reference vectors", referenceDifference];
+"gauge invariance of the real emission checked"
+
+
+(* ::Section:: *)
+(*Timing and save*)
+
+
+(* ::Text:: *)
+(*The number of products computed, and their total and largest time in seconds (from the pair files).*)
+
+
+(* ::Input:: *)
+pairTimes = Association @ Table[FileBaseName[f] -> Get[f]["Seconds"], {f, FileNames["*.wl", pairDirectory]}];
+{Length[pairTimes], Round[Total[pairTimes]], Round[Max[pairTimes]]}
+
+
+(* ::Text:: *)
+(*The result, in the format of the FeynCalc route (the Born square, the virtual interference and the real-emission square for the components XX and NN, and the transfer Born table), is saved to Results/Tracer/class-<n>/Algebra.wl for steps 3 and 4, and the parallel kernels are closed.*)
+
+
+(* ::Input:: *)
+algebra = <|"Born" -> born, "Virtual" -> virtual, "Real" -> real, "BornTable" -> bornTable, "Class" -> class, "Spec" -> spec, "Spins" -> outputSpins,
+  "Families" -> families, "Variables" -> "s, t, u = -s-t; A = (pa-k1)^2, B = (pb-k1)^2, C = (p+k1)^2 = -s4-A-B; spe3; loopHat2 via HatPower[n]; XX divided by |eX||eC| = -t u/(t+u)"|>;
+SaveResult["Algebra", algebra, "Tracer/class-" <> class];
+CloseKernels[];
+Keys[algebra]
+
+
+(* ::Section:: *)
+(*Comparison with the FeynCalc route*)
+
+
+(* ::Text:: *)
+(*The two routes must give the same Algebra.wl.  Born, virtual and real parts (components XX and NN) are compared, in exact arithmetic, at two random rational points (a sampled comparison, not a symbolic identity) of s, t, u, A, B, D, CA, spe3 and Nf, with C = -(s+t+u) - A - B and CF = (CA^2-1)/(2 CA); in the virtual part every scalar integral K...[n1,n2,n3,n4] is replaced by its own random rational number and HatPower[n] by hp^n with a random rational hp, so that the coefficient of every integral and every hat power is compared.  The transfer Born table is compared entry by entry for both components and all channels, at the same points.  (If the FeynCalc route has not been run for this class, the comparison is skipped and says so.)*)
+
+
+(* ::Input:: *)
+feynCalcFile = FileNameJoin[{ResultsDirectory["FeynCalc/class-" <> class], "Algebra.wl"}];
+comparison = If[!FileExistsQ[feynCalcFile], "FeynCalc result not available: comparison skipped",
+  Module[{other = Get[feynCalcFile], integrals, points, valueAt},
+    integrals = Union[Cases[{virtual, other["Virtual"]}, (KVirtualST | KVirtualSU | KVirtualTU)[__], Infinity]];
+    points = Table[Join[With[{v = RandomInteger[{1, 997}, 9]/RandomInteger[{998, 1997}, 9]},
+        {s -> 1 + v[[1]], t -> -v[[2]], u -> -v[[3]], A -> -v[[4]], B -> -v[[5]], D -> 4 - v[[6]], CA -> 2 + 10 v[[7]], spe3 -> v[[8]], Nf -> 1 + 5 v[[9]], hp -> 1 + v[[1]] v[[2]]}],
+      Thread[integrals -> RandomInteger[{1, 10^6}, Length[integrals]]/RandomInteger[{1, 10^6}, Length[integrals]]]], {2}];
+    valueAt[expr_, point_] := expr /. HatPower[n_] :> hp^n /. point /. C -> -(s + t + u) - A - B /. CF -> (CA^2 - 1)/(2 CA) /. point;
+    Join[
+      Association @ Flatten[Table[part <> " " <> sc -> Union[Table[Together[valueAt[algebra[part][sc], point] - valueAt[other[part][sc], point]], {point, points}]],
+        {part, {"Born", "Virtual", "Real"}}, {sc, outputSpins}]],
+      Association @ Table["BornTable " <> sc -> Union[Flatten[Table[Together[valueAt[bornTable[sc][name], point] - valueAt[other["BornTable"][sc][name], point]],
+        {name, Keys[other["BornTable"][sc]]}, {point, points}]]], {sc, outputSpins}]]]];
+Require[!AssociationQ[comparison] || Union[Flatten[Values[comparison]]] === {0}, "The Tracer route differs from the FeynCalc route", comparison];
+comparison

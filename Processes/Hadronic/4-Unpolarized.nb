@@ -1,0 +1,331 @@
+Notebook[{Cell["Proton-proton classes, step 4: the unpolarized NLO hard \
+coefficient of one class", "Title"], 
+  Cell["Input: Results/<route>/class-<n>/Algebra.wl and Reduced.wl (steps 2 \
+and 3), and the Born table of Processes/PartonicBorn.  Output: \
+Results/<route>/class-<n>/Unpolarized.wl with the finite hard coefficient in \
+the basis {regular, D0, D1, delta} and its comparison with the reference code \
+of Aversa, Chiappetta, Greco and Guillet \
+(Reference/pp-fortran-values.wl).\n\nThe hard coefficient is sigma(s,v,w) = s \
+E dsigma/d^3p of the tagged parton (docs/CONVENTIONS.md), t = -s(1-v), u = -s \
+v w, s4 = s v (1-w):\n\n   sigma = alphaS^2 b(v) delta(1-w) + (alphaS^3/Pi) [ \
+R(v,w)/w + B(v) D0(w) + C(v) D1(w) + A(v) delta(1-w) ] + O(alphaS^4),\n\nwith \
+the Born b = |M|^2/(gs^4 s v) [at D = 4], the regular coefficient quoted with \
+the explicit factor 1/w of the literature, the distributions D0 = [1/(1-w)]_+ \
+and D1 = [log(1-w)/(1-w)]_+ defined at w = 1.  Scales: muR (renormalization), \
+muF (parton distributions of both incoming hadrons), muFF \
+(fragmentation).\n\nSteps: (1) Born through order eps; (2) real emission: \
+threshold branches (1-w)^(-1-lambda eps) and plus distributions; (3) virtual \
+correction with its normalization; (4) counterterms: coupling \
+renormalization, collinear subtractions of the two incoming legs (all parton \
+species that can produce the incoming parton) and of the fragmenting parton, \
+with the Born table; (5) pole cancellation; (6) finite coefficient and \
+comparison.", "Text"], Cell["Load", "Section"], 
+  Cell["Get[FileNameJoin[{NotebookDirectory[], \"..\", \"..\", \"FeynFacet\", \
+\"FeynFacet.wl\"}]]", "Input"], Cell["route = \"FeynCalc\";\nclass = \
+\"13\";\nspin = \"UU\";\nalgebra = LoadResult[\"Algebra\", route <> \
+\"/class-\" <> class];\nreduced = LoadResult[\"Reduced\", route <> \
+\"/class-\" <> class];\nspec = algebra[\"Spec\"];\nbornTable = \
+Get[FileNameJoin[{NotebookDirectory[], \"..\", \"PartonicBorn\", \"Results\", \
+\"Born.wl\"}]][\"Born\"];\nGet[FileNameJoin[{NotebookDirectory[], \
+\"classes.wl\"}]];\nregion = s > 0 && muR > 0 && muF > 0 && muFF > 0 && 0 < v \
+< 1 && 0 < w < 1 && Nf > 0;\ntoVW = {t -> -s (1 - v), s4 -> s v (1 - w), u -> \
+-s v w};\ncouplings = {gs -> Sqrt[4 Pi alphaS]};\n(* a Born square from the \
+table at (s, v) for the channel \"a b -> c\" (zero when flavour conservation \
+forbids it) *)\n(* the Born square of a b -> c from the table.  A channel in \
+which the flavour k appears without the flavour i (e.g. g qp -> g) is the \
+table's channel\n   with k relabelled as i, and a channel absent from the \
+table is looked up as its charge conjugate (every quark <-> antiquark), which \
+has the same\n   square for both spin cases (charge conjugation does not \
+change helicities) *)\nconjugateName[name_] := StringReplace[name, {\"qpb\" \
+-> \"qp\", \"qp\" -> \"qpb\", \"qb\" -> \"q\", \"q\" -> \
+\"qb\"}];\nrelabelName[name_] := StringReplace[name, {\"qpb\" -> \"qb\", \
+\"qp\" -> \"q\"}];\nbornOf[a_, b_, c_] := Module[{name = a <> \" \" <> b <> \
+\" -> \" <> c, candidates},\n  candidates = {name, conjugateName[name]};\n  \
+If[FreeQ[{a, b, c}, \"q\" | \"qb\"], candidates = Join[candidates, \
+relabelName /@ candidates]];\n  candidates = Select[candidates, \
+KeyExistsQ[bornTable[spin], #] &];\n  If[candidates === {}, 0, \
+bornTable[spin][First[candidates]]]];\nhard[square_] := square (4 Pi \
+alphaS)^2/(16 Pi^2 s v);        (* the hard cross section of a Born square \
+|M|^2/gs^4 *)\nspec[\"Name\"]", "Input"], Cell["Born", "Section"], 
+  Cell["bornHard = If[spec[\"Born\"] === None, 0, \
+Series[hard[algebra[\"Born\"][spin]/gs^4] /. D -> 4 - 2 eps /. toVW, {eps, 0, \
+1}]];\nborn0 = If[bornHard === 0, 0, Simplify[SeriesCoefficient[bornHard, \
+{eps, 0, 0}]]];\nborn1 = If[bornHard === 0, 0, \
+Simplify[SeriesCoefficient[bornHard, {eps, 0, 1}]]];\n{born0, born1}", 
+   "Input"], Cell["Real emission and its threshold expansion", "Section"], 
+  Cell["As in the lepton-quark process: the integrated real contribution \
+contains s4^(-eps) and, from the unmixed families, z^(-1-eps) and z^(-eps) \
+with z proportional to s4 = s v (1-w); ThresholdSplit makes every power of \
+(1-w) explicit and EndpointExpand expands the branches (1-w)^(-1-lambda eps) \
+into the distributions.  The measure of the two unobserved partons gives \
+1/(32 Pi^3); gs^6 -> (4 Pi alphaS)^3 with one factor muR^(2 eps) kept for the \
+extra coupling (the overall alphaS^2 muR^(4 eps) is common to every term and \
+not expanded).", "Text"], Cell["realHard = muR^(2 eps) (4 Pi alphaS)^3 \
+reduced[\"Real\"][spin]/gs^6/(32 Pi^3) /. toVW;\nsplit = \
+ThresholdSplit[realHard, w, eps];\nKeys[split[\"Branches\"]]", "Input"], 
+  Cell["realExpanded = EndpointExpand[split[\"Regular\"], \
+split[\"Branches\"], eps, w, region] /. reduced[\"ThresholdValues\"];   (* \
+the inert master functions at w = 1 are numbers \
+*)\nSimplify[realExpanded[\"Pole2\"], region]", "Input"], 
+  Cell["Virtual correction", "Section"], Cell["The interference of step 2 \
+with the loop masters of step 3 inserted.  Its normalization follows from the \
+conventions, not from the poles.  FeynArts (through FCFAConvert) writes the \
+one-loop amplitude as M1 = integral d^D loop/(2 Pi)^D of a sum of terms c_j x \
+(propagators), with every factor i of the vertices and propagators and the \
+sign of a closed quark loop already in c_j; the overall phase convention of \
+FeynArts is the same for the tree and the loop amplitude and cancels in M1 \
+M0*.  The scalar integrals I_j of steps 2 and 3 are defined with the measure \
+d^D loop/(i Pi^(D/2)), and\n\n   d^D loop/(2 Pi)^D = (i Pi^(D/2)/(2 Pi)^D) \
+d^D loop/(i Pi^(D/2)) = (i/(4 Pi)^(D/2)) d^D loop/(i Pi^(D/2)),   so   M1 = \
+(i/(4 Pi)^(D/2)) Sum_j c_j I_j.\n\nStep 2 stores virtual = Sum_j [i c_j M0*] \
+I_j (the spin sums make each i c_j M0* real; step 3 takes the real parts of \
+the I_j in the physical region), hence\n\n   2 Re(M1 M0 = (2/(4 Pi)^(D/2)) x \
+virtual = (2/(4 Pi)^2) (4 Pi)^eps x virtual,\n\nwith phase +1, set explicitly \
+below.  Two independent checks follow: here, the double pole of the virtual \
+correction must be the universal -(alphaS/(2 Pi)) (C_a + C_b + C_c + C_d) \
+times the Born term, C = CF for a quark and CA for a gluon (Catani, Phys. \
+Lett. B 427 (1998) 161); in the section Pole cancellation, it must cancel the \
+double pole of the real emission.  The ratio of the two double poles is still \
+computed and must be 2/(4 Pi)^2 up to a phase.", "Text"], 
+  Cell["virtualRaw = If[spec[\"Virtual\"], (4 Pi alphaS)^3 muR^(2 eps) \
+reduced[\"Virtual\"][spin]/gs^6/(16 Pi^2 s v) /. toVW, 0];\nvirtualSeries = \
+If[virtualRaw === 0, 0, Series[virtualRaw, {eps, 0, 0}]];\nvirtualPole2Raw = \
+If[virtualRaw === 0, 0, Simplify[SeriesCoefficient[virtualSeries, {eps, 0, \
+-2}], region]];\nloopNormalization = If[virtualRaw === 0, 0, 2/(4 Pi)^2 (4 \
+Pi)^eps];          (* 2/(4 Pi)^(D/2) with D/2 = 2 - eps, phase +1 (derivation \
+above) *)\n(* the ratio of the two double poles (\"Pole2\" is the coefficient \
+of delta(1-w)/eps^2) must be the constant 2/(4 Pi)^2 of the loop measure, up \
+to a phase;\n   the SU(N) relation CF = (CA^2-1)/(2 CA) is needed to see it.  \
+The phase itself is tested by the cancellation of the double poles below \
+*)\npoleRatio = If[virtualRaw === 0, 0, \
+Simplify[-realExpanded[\"Pole2\"]/virtualPole2Raw /. CF -> (CA^2 - 1)/(2 CA), \
+region]];\nRequire[virtualRaw === 0 || FreeQ[poleRatio, v | w | s] && \
+MemberQ[{1, -1, I, -I}, Simplify[poleRatio/(2 (4 Pi)^(-2))]],\n  \"The \
+virtual normalization is not 2/(4 Pi)^2 up to a phase\", \
+poleRatio];\nvirtualHard = loopNormalization virtualSeries;\nvirtualPole2 = \
+If[virtualRaw === 0, 0, SeriesCoefficient[virtualHard, {eps, 0, -2}]];\n(* \
+the universal double pole of a one-loop amplitude: -(alphaS/(2 Pi)) (sum of \
+the Casimirs of the four partons) x Born *)\ncasimirSum = If[spec[\"Born\"] \
+=== None, 0, Total[If[# === \"g\", CA, CF] & /@ \
+spec[\"Born\"]]];\nRequire[virtualRaw === 0 || Simplify[(virtualPole2 + \
+alphaS/(2 Pi) casimirSum born0) /. CF -> (CA^2 - 1)/(2 CA), region] === 0,\n  \
+\"The virtual double pole is not -(alphaS/(2 Pi)) (C_a + C_b + C_c + C_d) \
+times the Born term\", {virtualPole2, casimirSum born0}];\nvirtualPole1 = \
+If[virtualRaw === 0, 0, Simplify[SeriesCoefficient[virtualHard, {eps, 0, \
+-1}], region]];\nvirtualFinite = If[virtualRaw === 0, 0, \
+Simplify[SeriesCoefficient[virtualHard, {eps, 0, 0}], \
+region]];\nloopNormalization", "Input"], Cell["Counterterms", "Section"], 
+  Cell["All counterterms multiply D-dimensional Born terms (through order \
+eps) and carry the MSbar factor S_eps = (4 Pi)^eps e^(-eps EulerGamma) and \
+the scale ratio (muR^2/mu^2)^eps of the subtraction: each gives a pole tuple \
+K b0 and a finite tuple K (MSbarConstant b0 + b1 + log(muR^2/mu^2) b0), in \
+the basis {regular, D0, delta}.  Splitting functions in units of alphaS/(2 \
+Pi) are the kernels {regular(z), c0, cdelta} = regular(z) + c0 [1/(1-z)]_+ + \
+cdelta delta(1-z) of FeynFacet/Factorization.wl.\n\nCoupling renormalization: \
+alphaS_bare muR^(2 eps) = alphaS(muR) [1 - (alphaS/(2 Pi)) (beta0/(2 eps)) \
+S_eps + ...] with beta0 = (11 CA - 2 Nf)/3; the Born is of order alphaS^2, so \
+the counterterm is -(alphaS/(2 Pi)) (beta0/eps) S_eps x Born.\n\nIncoming leg \
+a: + (alphaS/(2 Pi)) (1/eps) S_eps (muR^2/muF^2)^eps Sum over the species c' \
+of P_{c' <- a} convoluted with the Born of c' b -> c, integral dz/z P(z) \
+sigma_Born(z s, z t, u).  The Born delta function fixes z = w and the \
+convolution becomes P(w)/w times the Born hard part b0 at (s, v); as a \
+distribution in w, P(w)/w = [regular(w) + c0]/w + c0 [1/(1-w)]_+ + cdelta \
+delta(1-w), because [1/(1-w)]_+ (1/w) = [1/(1-w)]_+ + 1/w (the lepton-quark \
+process has the case P_qq, giving CF {(1-w)/w, 2, 3/2}).\n\nIncoming leg b: \
+the same with the Born of a c' -> c, integral dz/z P(z) sigma_Born(z s, t, z \
+u).  Now the Born delta function fixes z = z0 = (1-v)/(1-vw); the physical \
+range 0 < w < 1 corresponds to 1-v < z < 1, so the plus distribution of the \
+kernel also integrates over 0 < z < 1-v, where the Born vanishes, which gives \
+the logarithm below.  As a distribution in w the convolution is\n\n   \
+regular(z0) h(w) + c0 [g(w) - g(1)]/(1-w) + c0 g(1) D0(w) + [cdelta + c0 \
+log(v/(1-v))] b0 delta(1-w),   h(w) = |M|^2(vw)/(16 Pi^2 s (1-v)),  g(w) = \
+h(w) (1-vw)/v,  g(1) = b0,\n\nwhere |M|^2(vw) is the Born square at v -> vw \
+(the kinematics of the rescaled parton b); dz/(1-z) = (1-v)/((1-vw)(1-w)) dw \
+and (1-v)/(1-vw) = 1 - v(1-w)/(1-vw) produce the D0 term and the log(1-v).  \
+All three convolution formulas (legs a and b, fragmentation) were also \
+checked by direct numerical integration against a test \
+function.\n\nFragmentation: + (alphaS/(2 Pi)) (1/eps) S_eps \
+(muR^2/muFF^2)^eps Sum over d of P_{c <- d} convoluted with the Born of a b \
+-> d at the rescaled final momentum: z = 1 - v + v w with the Jacobian v \
+w/(1-v+vw)^2 (lepton-quark process); for a kernel {regular, c0, cdelta} and \
+j(w) = the Born at the shifted point times the Jacobian,\n\n   (1/v) { c0 \
+[j(w) - j(1)]/(1-w) + v regular(z) j(w),  c0 j(1),  j(1) [cdelta + c0 log v] \
+}\n\n(the log v comes from the lower limit z = 1-v of the plus distribution); \
+the order-eps part of the Jacobian, z^(2 eps), adds 2 log(z) j0 to the finite \
+part.  A quark of flavour different from i (qp, qpb) stands for the Nf - 1 \
+other flavours.", "Text"], Cell["quarkQ[x_] := x =!= \"g\";\n(* P_{c <- a}: \
+unpolarized (\"\") or longitudinally polarized (\"Delta \") kernels \
+*)\nkernel[c_, a_, prefix_: \"\"] := Which[\n  !quarkQ[c] && !quarkQ[a], \
+SplittingKernel[prefix <> \"gg\", z] /. {TR -> 1/2, nf -> Nf},\n  quarkQ[c] \
+&& quarkQ[a], If[c === a, SplittingKernel[prefix <> \"qq\", z], {0, 0, 0}],\n \
+ !quarkQ[c] && quarkQ[a], SplittingKernel[prefix <> \"gq\", z],\n  True, \
+SplittingKernel[prefix <> \"qg\", z] /. TR -> 1/2];\nincomingPrefix = If[spin \
+=== \"LL\", \"Delta \", \"\"];        (* the incoming partons are polarized \
+in the LL case, the fragmenting one is not *)\nspecies = {\"q\", \"qb\", \
+\"qp\", \"qpb\", \"g\"};\n(* a quark of another flavour (qp, qpb) in a \
+counterterm stands for Nf - 1 flavours when it is summed over, i.e. when the \
+flavour k is not one of the\n   external partons of the class (then it is the \
+fixed flavour of that external parton); this matches the weights of the \
+real-emission processes *)\nmultiplicity[x_, leg_] := If[MemberQ[{\"qp\", \
+\"qpb\"}, x] && FreeQ[{a, b, c}, \"qp\" | \"qpb\"], Nf - 1, 1];\n{a, b, c} = \
+If[spec[\"Born\"] =!= None, spec[\"Born\"][[1 ;; 3]], spec[\"Real\"][[1, \
+1]][[1 ;; 3]]];\n(* {b0, b1} of a Born square |M|^2/gs^4 (given in s, t) at \
+the point v = vValue: |M|^2 (4 Pi alphaS)^2/(16 Pi^2 s vValue) with t = -s (1 \
+- vValue), u = -s vValue *)\nbornPieces[square_, vValue_] := Module[{ser = \
+Series[square (4 Pi alphaS)^2/(16 Pi^2 s vValue) /. D -> 4 - 2 eps /. {t -> \
+-s (1 - vValue), u -> -s vValue}, {eps, 0, 1}]},\n  {SeriesCoefficient[ser, \
+{eps, 0, 0}], SeriesCoefficient[ser, {eps, 0, 1}]}];      (* {b0, b1} of a \
+Born square |M|^2/gs^4 given in s, t *)\nbornAt[square_] := \
+bornPieces[square, v];\nbeta0 = (11 CA - 2 Nf)/3;\nfiniteOf[K_List, {b0_, \
+b1_}, logScale_] := K (MSbarConstant b0 + b1 + logScale b0);\n\n(* \
+renormalization *)\nrenormalization = With[{bb = If[spec[\"Born\"] === None, \
+{0, 0}, bornAt[algebra[\"Born\"][spin]/gs^4]]},\n  <|\"Pole\" -> {0, 0, \
+-beta0 bb[[1]]}, \"Finite\" -> {0, 0, -beta0 (MSbarConstant bb[[1]] + \
+bb[[2]])}|>];\n\n(* leg a *)\nlegA = Total[Table[With[{k = kernel[cp, a, \
+incomingPrefix], square = bornOf[cp, b, c]},\n  If[k === {0, 0, 0} || square \
+=== 0, <|\"Pole\" -> {0, 0, 0}, \"Finite\" -> {0, 0, 0}|>,\n    With[{bb = \
+bornAt[square], K = multiplicity[cp, a] {((k[[1]] /. z -> w) + k[[2]])/w, \
+k[[2]], k[[3]]}},\n      <|\"Pole\" -> K bb[[1]], \"Finite\" -> finiteOf[K, \
+bb, Log[muR^2/muF^2]]|>]]], {cp, species}]];\n\n(* leg b: the Born of a c' -> \
+c at v -> v w, with the weights h and g *)\nz0 = (1 - v)/(1 - v w);\nlegB = \
+Total[Table[With[{k = kernel[cp, b, incomingPrefix], square = bornOf[a, cp, \
+c]},\n  If[k === {0, 0, 0} || square === 0, <|\"Pole\" -> {0, 0, 0}, \
+\"Finite\" -> {0, 0, 0}|>,\n    Module[{hw, gw, b0, b1, h0, h1, g0, g1, m = \
+multiplicity[cp, b]},\n      {h0, h1} = bornPieces[square, v w] (v w)/(1 - v) \
+// Simplify;            (* h(w) = |M|^2(v w)/(16 Pi^2 s (1-v)): the Born hard \
+part at v w, with s v w replaced by s (1-v) *)\n      {g0, g1} = {h0, h1} (1 \
+- v w)/v // Simplify;                             (* g(w); g(1) = b0 *)\n     \
+ {b0, b1} = bornAt[square];\n      Require[Simplify[(g0 /. w -> 1) - b0] === \
+0, \"g(1) differs from the Born\", {g0, b0}];\n      <|\"Pole\" -> m {(k[[1]] \
+/. z -> z0) h0 + k[[2]] (g0 - b0)/(1 - w), k[[2]] b0, (k[[3]] + k[[2]] \
+Log[v/(1 - v)]) b0},\n        \"Finite\" -> m {(k[[1]] /. z -> z0) \
+(MSbarConstant h0 + h1 + Log[muR^2/muF^2] h0) + k[[2]] ((MSbarConstant g0 + \
+g1 + Log[muR^2/muF^2] g0) - (MSbarConstant b0 + b1 + Log[muR^2/muF^2] b0))/(1 \
+- w),\n          k[[2]] (MSbarConstant b0 + b1 + Log[muR^2/muF^2] b0), \
+(k[[3]] + k[[2]] Log[v/(1 - v)]) (MSbarConstant b0 + b1 + Log[muR^2/muF^2] \
+b0)}|>]]], {cp, species}]];\n\n(* fragmentation *)\ndw = 1 - v + v \
+w;\njFunction[bornTerm_] := v w (bornTerm /. v -> v \
+w/dw)/dw^2;\nfragmentationTuple[j_, k_] := Module[{jEnd = Simplify[j /. w -> \
+1, region]},\n  (1/v) {k[[2]] (j - jEnd)/(1 - w) + v (k[[1]] /. z -> dw) j, \
+k[[2]] jEnd, jEnd (k[[3]] + k[[2]] Log[v])}];\nfragmentation = \
+Total[Table[With[{k = kernel[c, d], square = bornOf[a, b, d]},\n  If[k === \
+{0, 0, 0} || square === 0, <|\"Pole\" -> {0, 0, 0}, \"Finite\" -> {0, 0, \
+0}|>,\n    With[{bb = bornAt[square]},\n      <|\"Pole\" -> multiplicity[d, \
+c] fragmentationTuple[jFunction[bb[[1]]], k],\n        \"Finite\" -> \
+multiplicity[d, c] fragmentationTuple[MSbarConstant jFunction[bb[[1]]] + \
+jFunction[bb[[2]]] + 2 jFunction[bb[[1]]] Log[dw] + Log[muR^2/muFF^2] \
+jFunction[bb[[1]]], k]|>]]], {d, species}]];\ncounterterms = \
+<|\"renormalization\" -> renormalization, \"incoming a\" -> legA, \"incoming \
+b\" -> legB, \"fragmentation\" -> fragmentation|>;\n\n(* LL only: the HVBM \
+scheme breaks helicity conservation at the quark-gluon vertex by a finite \
+amount; the finite renormalization of the\n   polarized quark density with \
+the kernel Delta f_qq(z) = -4 CF (1-z) (Vogelsang 1996, used in the reference \
+code) adds\n   -(alphaS/(2 Pi)) Delta f_qq (x) Delta sigma_Born for every \
+polarized incoming quark leg: for leg a with the kernel at w, for leg b\n   \
+with the kernel at z0 and the weight h(w) of the leg-b convolution \
+*)\nhelicityRestoration = If[spin =!= \"LL\" || spec[\"Born\"] === None, \
+<|\"Pole\" -> {0, 0, 0}, \"Finite\" -> {0, 0, 0}|>,\n  Module[{square = \
+algebra[\"Born\"][spin]/gs^4, b0, h0, termA, termB},\n    b0 = \
+bornAt[square][[1]];\n    h0 = (bornPieces[square, v w] (v w)/(1 - v))[[1]];  \
+                  (* h(w) = |M|^2(vw)/(16 Pi^2 s (1-v)), as in the leg-b \
+convolution and in 5-Polarized.wl *)\n    termA = If[quarkQ[a], \
+-HelicityRestorationKernel[w]/w b0, 0];\n    termB = If[quarkQ[b], \
+-(HelicityRestorationKernel[z] /. z -> z0) h0, 0];\n    <|\"Pole\" -> {0, 0, \
+0}, \"Finite\" -> {termA + termB, 0, 0}|>]];\nIf[spin === \"LL\", \
+counterterms[\"helicity restoration\"] = \
+helicityRestoration];\nMap[Simplify[#, region] &, Map[#[\"Pole\"] &, \
+counterterms]]", "Input"], Cell["Pole cancellation", "Section"], 
+  Cell["colourRelation = CF -> (CA^2 - 1)/(2 CA);                      (* \
+SU(N): the cancellations hold only with it \
+*)\nRequire[Simplify[(realExpanded[\"Pole2\"] + virtualPole2) /. \
+colourRelation, region] === 0, \"Double poles do not cancel\"];\npoleTable = \
+Join[{realExpanded[\"Pole1\"], {0, 0, virtualPole1}}, alphaS/(2 Pi) \
+Map[#[\"Pole\"] &, Values[counterterms]]];\nsinglePoles = Total[poleTable] /. \
+reduced[\"MasterFunctions\"];        (* the pole coefficient of the mixed \
+masters, F3[-1][z] = -2/(1-z), is a function of w *)\nRequire[And @@ \
+(ExactDifference[# /. colourRelation, 0, region] === 0 & /@ singlePoles), \
+\"Single poles do not cancel\", Simplify[singlePoles /. colourRelation, \
+region]];\nGrid[Prepend[MapThread[Prepend[Map[Simplify[#, region] &, #2], #1] \
+&,\n  {Join[{\"real emission\", \"virtual\"}, Keys[counterterms], {\"sum\"}], \
+Append[poleTable, singlePoles]}],\n  {\"1/eps coefficient of\", \"regular\", \
+\"D0\", \"delta\"}], Alignment -> Left, Dividers -> {{2 -> True}, {2 -> True, \
+-2 -> True}}]", "Input"], Cell["The finite hard coefficient", "Section"], 
+  Cell["finiteCounterterms = alphaS/(2 Pi) Map[{#[\"Finite\"][[1]], \
+#[\"Finite\"][[2]], 0, #[\"Finite\"][[3]]} &, counterterms];\nfinite = \
+realExpanded[\"Finite\"] + {0, 0, 0, virtualFinite} + \
+Total[Values[finiteCounterterms]];\nfinite = finite /. \
+reduced[\"MasterFunctions\"];\nprefactor = alphaS^3/(Pi s v \
+w);\nprefactorEndpoint = prefactor /. w -> 1;\ncoefficients = \
+Map[Collect[Expand[#], {_Log, _PolyLog}, Factor] &, finite/{prefactor, \
+prefactorEndpoint, prefactorEndpoint, \
+prefactorEndpoint}];\nTableForm[Transpose[{ThresholdBasis, Map[Short[#, 6] &, \
+coefficients]}]]", "Input"], Cell["Comparison with the reference code", 
+   "Section"], Cell["Reference/pp-fortran-values.wl holds, at nine points (v, \
+w) for this class (J0 of the codes), the pieces of the hard coefficient \
+computed by the Fortran code of Aversa et al.: F0 (Born), AVDEL and AVDELMU \
+(delta terms), AVWPL (coefficient of 1/(w(1-w)) with its value AVWPL1 at w = \
+1 subtracted in the plus prescription), AVLO (the same for log(1-w)/(w(1-w))) \
+and the regular remainder.  In the normalization of the code (see \
+Reference/fortran/README.md) the Born term is F0 = Pi b/(1-v) with our b = \
+|M|^2/(gs^4 s v), and the NLO term is alphaS/(4 (1-v) s CC) times the pieces \
+(the colour normalization CC of the code is 8 Nc^2 for two incoming quarks); \
+relative to the Born, the four coefficients of our basis are therefore\n\n   \
+{R, B, C, A} = alphaS^3/(Pi s CC) x CanonicalDistribution[1, {Regular, AVWPL, \
+AVLO, AVDEL + CC AVDELMU log(s/muR^2)}],\n\nthe canonical form implementing \
+the plus prescription of the code (subtraction at w = 1).  The code \
+integrates over its hadronic variables with the partonic invariant s-hat = x1 \
+x2 S and x1 proportional to 1/w, so the factor 1/w of our normalization sigma \
+= alphaS^3/(Pi s v w) [...] sits in its Jacobian: its pieces are compared \
+with our finite coefficient directly (the comparison of a class without plus \
+distributions, e.g. class 2, fixes this convention, the Born relation the \
+overall factor).  The comparison is numerical, at double precision, for all \
+nine points; the Born relation F0 = Pi b/(1-v) is checked as well (it fixes \
+the relative normalization for the classes without Born term, where it was \
+verified on the Born classes).", "Text"], Cell["Get[FileNameJoin[{NotebookDir\
+ectory[], \"..\", \"..\", \"Reference\", \"pp-fortran-values.wl\"}]];\npoint \
+= PPFortranValues[\"Point\"];\nrows = Select[PPFortranValues[spin /. {\"UU\" \
+-> \"Unpolarized\", \"LL\" -> \"Polarized\"}], #[\"J0\"] == \
+ToExpression[class] &];\nnumericValues = {s -> point[\"s\"], muF -> \
+Sqrt[point[\"muF2\"]], muR -> Sqrt[point[\"muR2\"]], muFF -> \
+Sqrt[point[\"muFF2\"]], Nf -> point[\"Nf\"], CA -> point[\"Nc\"], CF -> \
+(point[\"Nc\"]^2 - 1)/(2 point[\"Nc\"]), alphaS -> 1};\nours[row_] := \
+N[finite /. numericValues /. {v -> row[\"v\"], w -> row[\"w\"]}, \
+20];\ntheirs[row_] := Module[{fortran, canonical, vv = row[\"v\"], ww = \
+row[\"w\"]},\n  (* the w dependence of the pieces is only known at the \
+tabulated w; the canonical form needs the pieces at w and at w = 1 *)\n  (* \
+AVDELMU, the coefficient of log(s/muR^2) in the delta term, is printed by the \
+code already divided by CC *)\n  canonical = {row[\"Regular\"] + \
+(row[\"AVWPL\"] - row[\"AVWPL1\"])/(1 - ww) + (row[\"AVLO\"] - \
+row[\"AVLO1\"]) Log[1 - ww]/(1 - ww), row[\"AVWPL1\"], row[\"AVLO1\"], \
+row[\"AVDEL\"] + row[\"CC\"] row[\"AVDELMU\"] \
+Log[point[\"s\"]/point[\"muR2\"]]};\n  canonical/(Pi point[\"s\"] \
+row[\"CC\"])];\nbornCheck = Table[If[born0 === 0, row[\"F0\"], row[\"F0\"] - \
+N[Pi/(1 - row[\"v\"]) born0/alphaS^2 /. numericValues /. v -> row[\"v\"], \
+20]], {row, rows}];\n(* relative differences; a coefficient that vanishes in \
+both (within double precision) counts as agreeing *)\n(* the difference of \
+each coefficient, relative to its reference value plus 1/100 of the largest \
+of the four reference values at that point:\n   the reference codes compute \
+in double precision, with an absolute error of order 10^-8 times the size of \
+the terms that build a coefficient,\n   so a coefficient that nearly vanishes \
+at a point (class 16, D0 at v = 4/5: 3 10^-5 against 160 for the regular \
+term) is compared at that absolute precision *)\nrelative[o_, t_] := \
+With[{scale = Max[Abs[t]]/100}, MapThread[If[Abs[#1] < 10^-10 && Abs[#2] < \
+10^-10, 0, (#1 - #2)/(Abs[#2] + scale)] &, {o, t}]];\ncomparison = \
+Table[{row[\"v\"], row[\"w\"], ours[row], theirs[row], relative[ours[row], \
+theirs[row]]}, {row, rows}];\nRequire[Max[Abs[bornCheck]] < 10^-8, \"The Born \
+term differs from the reference code\", \
+bornCheck];\nGrid[Prepend[Map[NumberForm[#, 8] &, comparison[[All, {1, 2, \
+5}]], {2}], {\"v\", \"w\", \"differences of {R, B, C, A} (relative, see \
+above)\"}], Frame -> All]", "Input"], Cell["Save", "Section"], 
+  Cell["result = <|\"Basis\" -> ThresholdBasis, \"Prefactor\" -> prefactor, \
+\"Coefficients\" -> coefficients, \"Finite\" -> finite, \"Born\" -> born0, \
+\"Virtual\" -> virtualFinite,\n  \"Real\" -> realExpanded[\"Finite\"], \
+\"Counterterms\" -> finiteCounterterms, \"Comparison\" -> comparison, \
+\"Route\" -> route, \"Class\" -> class, \"Spin\" -> spin|>;\nSaveResult[spin \
+/. {\"UU\" -> \"Unpolarized\", \"LL\" -> \"Polarized\"}, result, route <> \
+\"/class-\" <> class];\n(* the reference values are double-precision outputs \
+of a code with large internal cancellations: agreement at the level of 10^-8 \
+to 10^-7 is what they allow *)\nRequire[Max[Abs[Flatten[comparison[[All, \
+5]]]]] < 10^-6, \"The hard coefficient differs from the reference code\", \
+comparison];\n\"agreement with the reference code at all points\"", 
+   "Input"]}, WindowSize -> {1000, 800}]

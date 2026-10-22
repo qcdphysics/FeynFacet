@@ -1,0 +1,86 @@
+Notebook[{Cell["Lepton-quark scattering, step 1: diagrams and amplitudes", 
+   "Title"], Cell["Process: l(l) + q(k) -> q(p) + X.  The outgoing quark with \
+momentum p is observed; the scattered lepton is not.  This step generates \
+every Feynman diagram with FeynArts and converts the amplitudes into a plain, \
+program-independent form that the three algebra routes (FeynCalc, FORM, \
+Tracer) read in step 2.  It is the same for both spin cases.\n\nFour sets of \
+diagrams are needed:\n  Born:     l q -> l q by photon exchange (one \
+diagram);\n  Real:     l q -> l q g, gluon emitted from the incoming or \
+outgoing quark (two diagrams);\n  Virtual:  the one-loop QCD corrections to l \
+q -> l q (vertex and two external-leg graphs);\n  Photon:   gamma q -> q g, \
+the Born process needed to subtract the collinear photon emitted by the \
+lepton (two diagrams).\n\nMomenta: l, k incoming; lp (scattered lepton), p \
+(observed quark), r (gluon) outgoing; loop is the loop momentum; the photon \
+in the last process carries q.  Couplings: ee is the electromagnetic \
+coupling, eq the quark charge in units of ee, gs the strong coupling.  \
+FeynArts' SMQCD model has an up quark of charge 2/3; the prefactor 3 eq/2 \
+replaces it by the general charge eq.", "Text"], 
+  Cell["Load the package", "Section"], Cell["The package must be loaded in a \
+cell of its own, before any cell that uses its functions is parsed.", 
+   "Text"], Cell["Get[FileNameJoin[{NotebookDirectory[], \"..\", \"..\", \
+\"FeynFacet\", \"FeynFacet.wl\"}]]", "Input"], 
+  Cell["LoadFeynCalc[]", "Input"], Cell["Generate the diagrams", "Section"], 
+  Cell["F[2,{1}] is the electron, F[3,{1}] the up quark, V[1] the photon and \
+V[5] the gluon in FeynArts' SMQCD model.  We exclude Higgs and Goldstone \
+bosons S, ghosts U, the weak bosons V[2|3], neutrinos F[1] and down-type \
+quarks F[4]: only QED and QCD interactions remain.", "Text"], 
+  Cell["process = {F[2, {1}], F[3, {1}]} -> {F[2, {1}], F[3, {1}]};\nexcluded \
+= {S[_], U[_], V[2 | 3], F[1 | 4]};\ngenerate[topologies_, fields_, extra_: \
+{}] := InsertFields[topologies, fields,\n  InsertionLevel -> {Classes}, Model \
+-> \"SMQCD\", ExcludeParticles -> Join[excluded, extra]];\n\nbornDiagrams = \
+generate[CreateTopologies[0, 2 -> 2], process, {V[5]}];\nrealDiagrams = \
+DiagramSelect[\n  generate[CreateTopologies[0, 2 -> 3], {F[2, {1}], F[3, \
+{1}]} -> {F[2, {1}], F[3, {1}], V[5]}],\n  !FreeQ[TreeFields[##], V[1, ___]] \
+&];                      (* keep photon exchange, drop Z and gluon exchange \
+*)\nvirtualDiagrams = DiagramSelect[\n  generate[CreateTopologies[1, 2 -> 2, \
+ExcludeTopologies -> {Tadpoles}], process],\n  !FreeQ[LoopFields[##], V[5, \
+___]] && !FreeQ[TreeFields[##], V[1, ___]] &];   (* gluon in the loop, photon \
+exchanged *)\nvertexDiagrams = DiagramSelect[virtualDiagrams, \
+WFCorrectionFields[##] === {} &];   (* the vertex graph alone \
+*)\nphotonDiagrams = generate[CreateTopologies[0, 2 -> 2], {V[1], F[3, {1}]} \
+-> {F[3, {1}], V[5]}, {F[2]}];\n\n<|\"Born\" -> Length[bornDiagrams], \
+\"Real\" -> Length[realDiagrams], \"Virtual\" -> Length[virtualDiagrams],\n  \
+\"VirtualVertex\" -> Length[vertexDiagrams], \"Photon\" -> \
+Length[photonDiagrams]|>", "Input"], Cell["The two external-leg (self-energy) \
+graphs among the three virtual diagrams are scaleless on massless external \
+lines and vanish in dimensional regularization; only the vertex graph is used \
+in step 2.  Expected counts: Born 1, Real 2, Virtual 3, VirtualVertex 1, \
+Photon 2.", "Text"], Cell["Require[Length /@ {bornDiagrams, realDiagrams, \
+virtualDiagrams, vertexDiagrams, photonDiagrams} === {1, 2, 3, 1, 2},\n  \
+\"Unexpected number of diagrams\"];\nPaint[realDiagrams, ColumnsXRows -> {2, \
+1}, Numbering -> Simple, SheetHeader -> None, ImageSize -> {500, 220}]", 
+   "Input"], Cell["Paint[vertexDiagrams, ColumnsXRows -> {1, 1}, Numbering -> \
+Simple, SheetHeader -> None, ImageSize -> {250, 220}]", "Input"], 
+  Cell["Amplitudes", "Section"], Cell["CreateFeynAmp gives the amplitude of \
+each diagram with external spinors and polarization vectors in place \
+(Truncated -> False).  FCFAConvert rewrites it in FeynCalc notation; with \
+Contract -> False nothing is contracted or simplified, so the open spinor \
+chains are exactly those of the diagram.  All momenta and Dirac matrices are \
+D-dimensional (ChangeDimension -> D); masses are set to zero.", "Text"], 
+  Cell["amplitude[diagrams_] := CreateFeynAmp[diagrams, Truncated -> False, \
+PreFactor -> 1, GaugeRules -> {}];\nconvert[diagrams_, incoming_, outgoing_, \
+loops_: {}] := FCFAConvert[amplitude[diagrams],\n  IncomingMomenta -> \
+incoming, OutgoingMomenta -> outgoing, LoopMomenta -> loops,\n  \
+UndoChiralSplittings -> True, ChangeDimension -> D, List -> True, SMP -> \
+True, Contract -> False,\n  DropSumOver -> True, Prefactor -> 3 eq/2,\n  \
+FinalSubstitutions -> {SMP[\"m_e\"] -> 0, SMP[\"m_u\"] -> 0}] /. GaugeXi[_] \
+-> 1;   (* Feynman gauge *)\n\nfeyncalcAmplitudes = <|\n  \"Born\" -> \
+convert[bornDiagrams, {l, k}, {lp, p}],\n  \"Real\" -> convert[realDiagrams, \
+{l, k}, {lp, p, r}],\n  \"VirtualVertex\" -> convert[vertexDiagrams, {l, k}, \
+{lp, p}, {loop}],\n  \"Photon\" -> convert[photonDiagrams, {q, k}, {p, \
+r}]|>;\nfeyncalcAmplitudes[\"Born\"]", "Input"], 
+  Cell["The same amplitudes as plain records", "Section"], 
+  Cell["AmplitudeRecords writes each term of an amplitude as a coefficient \
+(couplings, propagators Den[q] = 1/q^2, colour tensors, metric tensors, \
+polarization vectors) times open fermion chains Chain[Ubar[p], \
+GammaMatrix[mu], Slash[k - r], ..., Uspinor[k]].  This is the form FORM and \
+Tracer start from; it is also the easiest form to compare with a hand-written \
+amplitude.", "Text"], Cell["records = Map[AmplitudeRecords, \
+feyncalcAmplitudes, {2}];\nShowRecords[Flatten[records[\"Real\"]]]", 
+   "Input"], Cell["The two real-emission diagrams: emission from the incoming \
+quark line (propagator Den[k - r]) and from the outgoing one (Den[p + r]), \
+each with the photon propagator Den[k - p - r].", "Text"], 
+  Cell["ShowRecords[Flatten[records[\"VirtualVertex\"]]]", "Input"], 
+  Cell["Save", "Section"], Cell["SaveAmplitudes[<|\"FeynCalc\" -> \
+feyncalcAmplitudes, \"Records\" -> records|>]", "Input"]}, 
+ WindowSize -> {1000, 800}]

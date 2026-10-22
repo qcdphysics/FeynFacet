@@ -1,0 +1,13 @@
+jobs:
+  - reduce_sectors:
+      reduce:
+        - {topologies: [real_AB, real_AC, real_BC, real_ABp, real_ACp, real_BCp], sectors: [15], r: 8, s: 8}
+      select_integrals:
+        select_mandatory_list:
+          - [targets]
+      run_initiate: true
+      run_triangular: true
+      run_back_substitution: true
+  - kira2math:
+      target:
+        - [targets]

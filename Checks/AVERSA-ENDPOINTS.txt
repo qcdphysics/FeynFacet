@@ -1,0 +1,71 @@
+ANALYTIC q g -> q ENDPOINT BENCHMARK
+
+Reference
+F. Aversa, P. Chiappetta, M. Greco and J.-P. Guillet,
+QCD Corrections to Parton-Parton Scattering Processes,
+Nucl. Phys. B327 (1989) 105-143,
+https://doi.org/10.1016/0550-3213(89)90288-5.
+
+The benchmark transcribes the printed formulas: distribution convention in
+Eq. (22), quark finite scheme functions in Eq. (23), Born term in Eq. (41),
+and the E01 (q g -> q + X) endpoint coefficients in Eq. (43). Relevant
+printed pages are 113-114 and 127-128. It uses CQ=0 in Eq. (43); the finite
+quark functions f_qq and d_qq are exceptions to the paper's CQ switch and
+therefore remain present at CQ=0 (see the paragraph after Eq. (23)).
+No Fortran output or process-specific assembly helper is used.
+
+What is compared
+The inputs are the UU Born term and three endpoint coefficients of class13
+in Coefficients/ProtonProton.wl. Write B(v)=s*Born/alpha_s^2. The released
+coefficient convention is
+
+ sigma = Born delta(1-w)
+       + alpha_s^3/(pi s v) [c_D0 D0+c_D1 D1+c_delta delta(1-w)] + regular.
+
+Aversa's Eq. (22) factors Born*alpha_s/(2pi), so its normalized endpoint
+coefficients correspond to 2{c_D0,c_D1,c_delta}/[v B(v)]. Equation (41)
+uses d sigma/dv=pi v*sigma_Born, which is also checked. The paper prints
+2 C_i in Eq. (43); the checker compares C_i. Its log(s/M^2), log(s/M_f^2),
+log(s/mu^2) are -LF,-LFF,-LR in the released tables, and Tr=Nf/2.
+
+Finite quark-scheme conversion
+In Eq. (23), ignoring regular functions which cannot contribute endpoint
+plus distributions or deltas,
+
+ f_qq/CF = (1+z^2) D1(z) - (3/2) D0(z) - (9/2+pi^2/3) delta(1-z),
+ d_qq/CF = (1+z^2) D1(z) - (3/2) D0(z) + (2pi^2/3-9/2) delta(1-z).
+
+The incoming-quark convolution has z=w and endpoint slope k=1. The
+fragmentation convolution has z=1-v+vw and slope k=v. In both cases the
+endpoint density divided by k equals Born. A D1 pullback contributes
+{j1/k log k, j1/k, j1/(2k) log^2 k} to {D0,D1,delta}; a D0 pullback gives
+{j1/k,0,j1/k log k}. Since 1+z^2=2 at z=1, the summed normalized scheme
+shift is
+
+ CF {2 log(v)-3, 4, log^2(v)-(3/2)log(v)+pi^2/3-9}.
+
+Subtract this finite quark PDF/FF shift from the MSbar result before
+comparison with Eq. (43) at CQ=0. For example, at Nc=3 the normalized D1
+changes from 50/3 to 34/3. Omitting this conversion is a tested nonzero
+control, rather than a change to the released MSbar coefficient.
+
+Scope and checks
+The regular NLO density is not part of this benchmark. All three endpoint
+identities are checked as rational identities in generic v,Nc,Nf and the
+three independent scale logarithms. Log(v) and Log(1-v) are treated as
+independent algebraic symbols; no numerical sampling or branch-changing
+log rules are needed. The physical region is 0<v<1. Finite, scale-independent
+perturbations of each actual endpoint are required to fail the same
+comparison, illustrating information beyond pole and scale cancellation.
+
+Execution
+AversaEndpoints.wls needs Mathematica and Coefficients/ProtonProton.wl;
+it does not load FeynCalc, FORM, Tracer, Kira, or SubTropica. Run from the
+repository root with an output directory outside the source tree:
+
+ FEYNFACET_SOURCE="$PWD" FEYNFACET_BENCHMARK_OUTPUT="../aversa-check" \
+   math -noprompt -script Checks/AversaEndpoints.wls
+
+The output directory receives endpoints.wl and summary.json. Keep generated
+execution artifacts outside a source release. Existing coefficient tables
+are read and hash-checked without modification.
