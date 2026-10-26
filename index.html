@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeynFacet</title>
+<style>
+/* a reading column for physicists: serif text, slate-blue accent, light and dark themes */
+:root { --ink:#1d2433; --muted:#5a6275; --accent:#3d4f8a; --accent2:#6b4fa0; --rule:#d9dce4;
+        --panel:#f5f6f9; --ok:#21734a; --new:#8a3d6b; --bg:#ffffff; --tile:#ffffff; --tileink:#555b66; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --ink:#e3e6ee; --muted:#a3a9b8; --accent:#9fb0ea; --accent2:#c3a8ef; --rule:#343a48;
+          --panel:#1b1f29; --ok:#6fcf9b; --new:#e39ac5; --bg:#12151c; --tile:#f4f5f8; --tileink:#3d4250; color-scheme:dark; } }
+:root[data-theme="dark"] { --ink:#e3e6ee; --muted:#a3a9b8; --accent:#9fb0ea; --accent2:#c3a8ef; --rule:#343a48;
+          --panel:#1b1f29; --ok:#6fcf9b; --new:#e39ac5; --bg:#12151c; --tile:#f4f5f8; --tileink:#3d4250; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.6 Georgia,"DejaVu Serif",serif; }
+header { border-bottom:1px solid var(--rule); }
+.bar { max-width:980px; margin:0 auto; padding:14px 20px; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 22px; }
+.brand { font-size:22px; font-weight:bold; color:var(--accent); text-decoration:none; letter-spacing:.3px; }
+.brand span { color:var(--accent2); }
+.brand img { height:16px; width:auto; display:block; }
+.bar { align-items:center; }
+h1.logo { margin:34px 0 20px; }
+h1.logo + p.lead { font-size:17.5px; }
+h1.logo img { display:block; width:min(100%, 360px); height:auto; margin-bottom:12px; }
+h1.logo span { display:block; font-size:26px; font-weight:normal; color:var(--muted); text-wrap:balance; }
+nav a { color:var(--muted); text-decoration:none; font-size:15px; margin-right:16px; }
+nav a.on, nav a:hover { color:var(--accent); }
+main { max-width:980px; margin:0 auto; padding:10px 20px 60px; min-width:0; }
+.wide { overflow-x:auto; }
+h1 { font-size:32px; line-height:1.25; margin:28px 0 6px; }
+h2 { font-size:23px; margin:38px 0 10px; padding-bottom:4px; border-bottom:1px solid var(--rule); }
+h3 { font-size:19px; margin:24px 0 6px; }
+p.lead { font-size:19px; color:var(--muted); margin-top:4px; }
+a { color:var(--accent); }
+table { border-collapse:collapse; width:100%; margin:12px 0 18px; font-size:15px; }
+th, td { border-bottom:1px solid var(--rule); padding:7px 8px; text-align:left; vertical-align:top; }
+th { font-weight:normal; color:var(--muted); font-size:14px; }
+tr.group td { font-weight:bold; background:var(--panel); }
+.tag { display:inline-block; font-size:12.5px; padding:1px 8px; border-radius:10px; border:1px solid currentColor; white-space:nowrap; }
+.tag.new { color:var(--new); } .tag.known { color:var(--ok); }
+.panel { background:var(--panel); border-radius:6px; padding:14px 18px; margin:16px 0; }
+.standard { counter-reset:n; list-style:none; padding:0; }
+.standard li { counter-increment:n; margin:10px 0 10px 38px; position:relative; }
+.standard li::before { content:counter(n); position:absolute; left:-38px; top:0; width:26px; height:26px; border-radius:50%;
+  background:var(--accent); color:var(--bg); text-align:center; font:bold 14px/26px sans-serif; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin:14px 0; }
+.tiles figure { margin:0; background:var(--tile); border:1px solid var(--rule); border-radius:6px; padding:6px; }
+.tiles .diagram { aspect-ratio:6 / 5; }
+.tiles img { width:100%; height:100%; object-fit:contain; object-position:center; display:block; }
+.tiles.tmd { grid-template-columns:repeat(2,minmax(0,240px)); }
+.tiles figcaption { font-size:12.5px; color:var(--tileink); text-align:center; margin-top:4px; }
+figure.plot { margin:22px 0; } figure.plot img { width:100%; background:var(--tile); border-radius:4px; }
+figure.plot figcaption { font-size:14.5px; color:var(--muted); margin-top:6px; }
+pre, code { font-family:"DejaVu Sans Mono",Menlo,monospace; font-size:14px; }
+pre { background:var(--panel); padding:12px 14px; border-radius:6px; overflow-x:auto; }
+.refs li { margin:8px 0; } .refs .note { color:var(--muted); font-size:14.5px; }
+.prompt { position:relative; } .prompt pre { white-space:pre-wrap; padding-top:40px; }
+.prompt button { position:absolute; top:8px; right:8px; font:13px sans-serif; padding:4px 12px; border-radius:4px;
+  border:1px solid var(--rule); background:var(--bg); color:var(--accent); cursor:pointer; }
+.steps { padding-left:22px; } .steps li { margin:6px 0; }
+footer { border-top:1px solid var(--rule); color:var(--muted); font-size:14px; }
+footer .bar { display:block; }
+</style>
+<script>window.MathJax = {tex: {inlineMath: [['$', '$']], displayMath: [['$$', '$$']]}, svg: {fontCache: 'global'}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+</head>
+<body>
+<header><div class="bar"><a class="brand" href="index.html"><img src="figures/logo/feynfacet-logo.svg" alt="FeynFacet"></a><nav><a href="index.html" class=on>Overview</a> <a href="results.html">Results</a> <a href="method.html">Method</a> <a href="reproduce.html">Reproduce</a> <a href="example.html">Example</a> <a href="references.html">References</a> <a href="paper.html">Paper</a> <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">Code</a></nav></div></header>
+<main>
+
+<h1 class="logo"><img src="figures/logo/feynfacet-logo.svg" alt="FeynFacet"><span>One Feynman-diagram calculation, many facets</span></h1>
+<p class="lead">FeynFacet derives perturbative results in quantum field theory from Feynman diagrams.  Every
+calculation follows one chain of steps: diagrams, spin and color algebra, integration-by-parts reduction, master
+integrals, renormalization, and the factorization or matching that the observable requires.  A new observable
+reuses the chain and changes only what it needs.  The chain is written as executable Mathematica notebooks that a
+physicist can read cell by cell, with three independent implementations of the spin and color algebra.</p>
+
+<p>The calculations released here give the NLO partonic hard functions for single-inclusive hadron and jet production in
+proton–proton and lepton–proton collisions, for unpolarized and longitudinally polarized beams, the double-transverse spin asymmetry
+$A_{TT}$ in proton–proton collisions, NLO TMDPDF matching coefficients and soft functions, and two new results: the NLO
+transverse spin transfer in lepton–quark scattering, which enters transverse-spin measurements at the
+Electron-Ion Collider, and the NLO transverse spin transfer in proton–proton collisions.  Every published result is rederived, not
+copied, and compared with the literature: identically where the published coefficients are analytic expressions,
+otherwise with the reference codes at many points to their numerical precision.</p>
+<div class="tiles "><figure><div class="diagram"><img src="figures/diagrams/leptonquark-born.svg" alt="Born diagram of ℓ q → ℓ q: one-photon exchange." loading="lazy"></div><figcaption>Born diagram of ℓ q → ℓ q: one-photon exchange.</figcaption></figure><figure><div class="diagram"><img src="figures/diagrams/leptonquark-vertex.svg" alt="One-loop QCD vertex correction to ℓ q → ℓ q (the external-leg self energies are scaleless and vanish)." loading="lazy"></div><figcaption>One-loop QCD vertex correction to ℓ q → ℓ q (the external-leg self energies are scaleless and vanish).</figcaption></figure><figure><div class="diagram"><img src="figures/diagrams/leptonquark-real-1.svg" alt="Real emission ℓ q → ℓ q g: gluon radiated from the incoming quark." loading="lazy"></div><figcaption>Real emission ℓ q → ℓ q g: gluon radiated from the incoming quark.</figcaption></figure><figure><div class="diagram"><img src="figures/diagrams/leptonoffdiagonal-gq-1.svg" alt="ℓ g → q + X (observed quark): photon-gluon fusion, diagram 1 of 2." loading="lazy"></div><figcaption>ℓ g → q + X (observed quark): photon-gluon fusion, diagram 1 of 2.</figcaption></figure><figure><div class="diagram"><img src="figures/diagrams/pp-class15-born-4.svg" alt="Born diagram 4 of 4 of g g → g g (channel class 15, g g -&gt; g)." loading="lazy"></div><figcaption>Born diagram 4 of 4 of g g → g g (channel class 15, g g -&gt; g).</figcaption></figure><figure><div class="diagram"><img src="figures/diagrams/pp-ggggg-real-13.svg" alt="Real emission g g → g g g (channel class 15): diagram 13 of 25." loading="lazy"></div><figcaption>Real emission g g → g g g (channel class 15): diagram 13 of 25.</figcaption></figure><figure><div class="diagram"><img src="figures/diagrams/tmd-igg.svg" alt="Gluon TMD PDF: the beam function I_gg at NLO (real emission)." loading="lazy"></div><figcaption>Gluon TMD PDF: the beam function I_gg at NLO (real emission).</figcaption></figure><figure><div class="diagram"><img src="figures/diagrams/tmd-sq.svg" alt="Soft function S_q at NLO: a real gluon between the Wilson lines along n and n̄." loading="lazy"></div><figcaption>Soft function S_q at NLO: a real gluon between the Wilson lines along n and n̄.</figcaption></figure></div>
+
+<h2>Getting started</h2>
+<p>An AI coding agent installs and checks the tools for you; you do not need to set them up one by one.</p>
+<ol class="steps">
+<li>Install Mathematica and clone the <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">repository</a>.</li>
+<li>Start the agent in the repository folder, with permission to run Mathematica and the external tools without
+approving each command: Codex with <code>codex --approve-for-me</code> (or “Approve for me” under
+<code>/permissions</code> at the start of a session); Claude Code in auto mode (Shift+Tab, or
+<code>claude --permission-mode auto</code>).  The tools write to their user and temporary directories, which a
+restrictive sandbox blocks.</li>
+<li>Paste the setup prompt below.  The agent installs FeynCalc, FeynArts, FORM, Tracer, Kira, Fermat and SubTropica
+and runs the toolchain check until it reports READY.</li>
+</ol>
+<div class="prompt"><button type="button" onclick="copyPrompt(this)">Copy</button><pre>Set up FeynFacet on this machine. Install the tools it needs, following
+docs/INSTALL.md (docs/INSTALL-macOS.md on a Mac; on Apple silicon, build
+Kira with tools/install_kira.py as described there), and run
+python3 feynfacet.py check --all-routes until it reports READY.
+Ask me before anything that needs an administrator password.</pre></div>
+<p>The <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/blob/main/docs/INSTALL.md">installation notes</a> are what the agent follows.  Mathematica and its
+license stay with you, and the agent asks before anything that needs your administrator password; on a Mac this
+includes Homebrew and Apple's Command Line Tools for Xcode.  On Apple silicon the agent builds a patched Kira, since the
+Kira 3.1 release build can silently return wrong reductions there
+(<a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/blob/main/docs/KIRA-CORRECTNESS.md">details</a>); this one-time build takes a few minutes.</p>
+<p>Then reproduce a calculation (<a href="reproduce.html">Reproduce</a>) or let the agent compute a new process
+(<a href="example.html">Example</a>).</p>
+
+<h2>The standard</h2>
+<p>A result is shown here only when it meets all four requirements:</p>
+<ol class="standard">
+<li><b>Three algebra routes.</b> The squared matrix elements are computed independently with
+<a target="_blank" rel="noopener" href="https://feyncalc.github.io">FeynCalc</a>, <a target="_blank" rel="noopener" href="https://form-dev.github.io/form/">FORM</a> and
+<a target="_blank" rel="noopener" href="https://library.wolfram.com/infocenter/MathSource/2987/">Tracer</a>.  For proton–proton collisions the three
+squares must agree before any integration (in exact rational arithmetic at two random rational points of all variables,
+every scalar integral given its own value); the integration and assembly act on each route's squares, and the finite
+coefficients are compared across routes.  For the lepton–proton and TMD calculations the finite coefficients of the
+three routes agree symbolically.</li>
+<li><b>Published benchmarks and crossing.</b> For known results, the finite coefficients agree with the published
+coefficients or the reference codes: identically where analytic expressions are available, otherwise to the
+precision of the reference at many points.  The new transverse spin transfer in proton–proton collisions is tied to
+the published double-transverse result by a generalized crossing symmetry found in this calculation (verified
+symbolically at Born level and at exact test points at NLO).</li>
+<li><b>Every step visible.</b> Diagram generation (<a target="_blank" rel="noopener" href="https://www.feynarts.de/">FeynArts</a>), traces, reverse unitarity, <a target="_blank" rel="noopener" href="https://kira.hepforge.org/">Kira</a> reduction, master
+integrals (<a target="_blank" rel="noopener" href="https://subtropi.ca/">SubTropica</a>), threshold expansion, renormalization and factorization are cells of the notebooks; every
+check is a visible <code>Require</code> that stops the calculation if it fails (pole cancellation, Born tables,
+scale dependence, and gauge invariance where it is tested).</li>
+<li><b>Usable without the tools.</b> The final coefficients are plain expressions in
+<a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/blob/main/Coefficients/README.md"><code>Coefficients/</code></a>, with a stand-alone evaluator that
+checks itself against 50-digit reference values.</li>
+</ol>
+
+<h2>The results</h2>
+<div class="wide"><table><tr><th>Result</th><th>Process</th><th>Status</th><th>Compared with</th></tr><tr><td><a href="results/collins.html">Transverse spin transfer in lepton–quark scattering</a></td><td>$\ell\, q^{\uparrow} \to q^{\uparrow} + X$ at NLO; resolved-photon Born channels</td><td><span class="tag new">new</span></td><td>new</td></tr><tr><td><a href="results/transfer.html">Transverse spin transfer in proton–proton collisions</a></td><td>$a^{\uparrow} b \to c^{\uparrow} + X$ at NLO, seven channel classes</td><td><span class="tag new">new</span></td><td>related to the double-transverse result by a generalized crossing symmetry found in this calculation</td></tr><tr><td><a href="results/pp.html">Proton–proton collisions: the 16 channel classes</a></td><td>$a\,b \to c + X$, spin average and double-longitudinal helicity difference</td><td><span class="tag known">known, rederived</span></td><td>Aversa, Chiappetta, Greco, Guillet (1989); Jäger, Schäfer, Stratmann, Vogelsang (2003)</td></tr><tr><td><a href="results/tt.html">Double-transverse proton–proton collisions</a></td><td>$a^{\uparrow} b^{\uparrow} \to c + X$ ($A_{TT}$), five channel classes</td><td><span class="tag known">known, rederived</span></td><td>Mukherjee, Stratmann, Vogelsang (2005), their Fortran code</td></tr><tr><td><a href="results/leptonquark.html">Lepton–quark scattering</a></td><td>$\ell\, q \to q + X$, unpolarized and double-longitudinal</td><td><span class="tag known">known, rederived</span></td><td>Hinderer, Schlegel, Vogelsang (2015, 2017)</td></tr><tr><td><a href="results/offdiagonal.html">Lepton–quark and lepton–gluon, other tagged parton</a></td><td>$\ell\, q \to g + X$ and $\ell\, g \to q + X$</td><td><span class="tag known">known, rederived</span></td><td>Hinderer, Schlegel, Vogelsang (2015, 2017)</td></tr><tr><td><a href="results/tmd.html">TMD beam functions and soft function</a></td><td>quark and gluon TMD PDFs at NLO, exponential rapidity regulator</td><td><span class="tag known">known, rederived</span></td><td>Luo, Yang, Zhu, Zhu (2021)</td></tr><tr><td><a href="results/born.html">Born table</a></td><td>all $2\to2$ partonic channels in $D$ dimensions, unpolarized and helicity difference</td><td><span class="tag known">known, rederived</span></td><td>Ellis, Stirling, Webber (Table 7.1); helicity and crossing relations</td></tr></table></div>
+
+<h2>How it was made</h2>
+<p>The calculations were carried out by AI agents working with physicists: the agents wrote and ran the
+process programs and used physics checks to locate and correct inconsistencies; the physicists specified
+the problems and reviewed the results.  The paper describes the workflow (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2610.31745">arXiv</a>);
+these pages present the calculation itself.</p>
+<script>
+function copyPrompt(button) {
+  var text = button.parentElement.querySelector('pre').innerText;
+  function done() { button.textContent = 'Copied'; setTimeout(function () { button.textContent = 'Copy'; }, 1500); }
+  function select() {
+    var range = document.createRange(); range.selectNodeContents(button.parentElement.querySelector('pre'));
+    var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    button.textContent = 'Selected: press Ctrl/Cmd+C';
+  }
+  try { navigator.clipboard.writeText(text).then(done, select); } catch (e) { select(); }
+}
+</script>
+
+</main>
+<footer><div class="bar">FeynFacet — Z.-B. Kang, W. Vogelsang, C. Zhang.
+Source code and coefficients: <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">https://github.com/qcdphysics/FeynFacet</a>.
+<a href="LICENSE.txt">MIT license</a>.</div></footer>
+</body></html>

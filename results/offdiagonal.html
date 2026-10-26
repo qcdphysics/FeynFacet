@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Off-diagonal lepton channels — FeynFacet</title>
+<style>
+/* a reading column for physicists: serif text, slate-blue accent, light and dark themes */
+:root { --ink:#1d2433; --muted:#5a6275; --accent:#3d4f8a; --accent2:#6b4fa0; --rule:#d9dce4;
+        --panel:#f5f6f9; --ok:#21734a; --new:#8a3d6b; --bg:#ffffff; --tile:#ffffff; --tileink:#555b66; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --ink:#e3e6ee; --muted:#a3a9b8; --accent:#9fb0ea; --accent2:#c3a8ef; --rule:#343a48;
+          --panel:#1b1f29; --ok:#6fcf9b; --new:#e39ac5; --bg:#12151c; --tile:#f4f5f8; --tileink:#3d4250; color-scheme:dark; } }
+:root[data-theme="dark"] { --ink:#e3e6ee; --muted:#a3a9b8; --accent:#9fb0ea; --accent2:#c3a8ef; --rule:#343a48;
+          --panel:#1b1f29; --ok:#6fcf9b; --new:#e39ac5; --bg:#12151c; --tile:#f4f5f8; --tileink:#3d4250; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.6 Georgia,"DejaVu Serif",serif; }
+header { border-bottom:1px solid var(--rule); }
+.bar { max-width:980px; margin:0 auto; padding:14px 20px; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 22px; }
+.brand { font-size:22px; font-weight:bold; color:var(--accent); text-decoration:none; letter-spacing:.3px; }
+.brand span { color:var(--accent2); }
+.brand img { height:16px; width:auto; display:block; }
+.bar { align-items:center; }
+h1.logo { margin:34px 0 20px; }
+h1.logo + p.lead { font-size:17.5px; }
+h1.logo img { display:block; width:min(100%, 360px); height:auto; margin-bottom:12px; }
+h1.logo span { display:block; font-size:26px; font-weight:normal; color:var(--muted); text-wrap:balance; }
+nav a { color:var(--muted); text-decoration:none; font-size:15px; margin-right:16px; }
+nav a.on, nav a:hover { color:var(--accent); }
+main { max-width:980px; margin:0 auto; padding:10px 20px 60px; min-width:0; }
+.wide { overflow-x:auto; }
+h1 { font-size:32px; line-height:1.25; margin:28px 0 6px; }
+h2 { font-size:23px; margin:38px 0 10px; padding-bottom:4px; border-bottom:1px solid var(--rule); }
+h3 { font-size:19px; margin:24px 0 6px; }
+p.lead { font-size:19px; color:var(--muted); margin-top:4px; }
+a { color:var(--accent); }
+table { border-collapse:collapse; width:100%; margin:12px 0 18px; font-size:15px; }
+th, td { border-bottom:1px solid var(--rule); padding:7px 8px; text-align:left; vertical-align:top; }
+th { font-weight:normal; color:var(--muted); font-size:14px; }
+tr.group td { font-weight:bold; background:var(--panel); }
+.tag { display:inline-block; font-size:12.5px; padding:1px 8px; border-radius:10px; border:1px solid currentColor; white-space:nowrap; }
+.tag.new { color:var(--new); } .tag.known { color:var(--ok); }
+.panel { background:var(--panel); border-radius:6px; padding:14px 18px; margin:16px 0; }
+.standard { counter-reset:n; list-style:none; padding:0; }
+.standard li { counter-increment:n; margin:10px 0 10px 38px; position:relative; }
+.standard li::before { content:counter(n); position:absolute; left:-38px; top:0; width:26px; height:26px; border-radius:50%;
+  background:var(--accent); color:var(--bg); text-align:center; font:bold 14px/26px sans-serif; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin:14px 0; }
+.tiles figure { margin:0; background:var(--tile); border:1px solid var(--rule); border-radius:6px; padding:6px; }
+.tiles .diagram { aspect-ratio:6 / 5; }
+.tiles img { width:100%; height:100%; object-fit:contain; object-position:center; display:block; }
+.tiles.tmd { grid-template-columns:repeat(2,minmax(0,240px)); }
+.tiles figcaption { font-size:12.5px; color:var(--tileink); text-align:center; margin-top:4px; }
+figure.plot { margin:22px 0; } figure.plot img { width:100%; background:var(--tile); border-radius:4px; }
+figure.plot figcaption { font-size:14.5px; color:var(--muted); margin-top:6px; }
+pre, code { font-family:"DejaVu Sans Mono",Menlo,monospace; font-size:14px; }
+pre { background:var(--panel); padding:12px 14px; border-radius:6px; overflow-x:auto; }
+.refs li { margin:8px 0; } .refs .note { color:var(--muted); font-size:14.5px; }
+.prompt { position:relative; } .prompt pre { white-space:pre-wrap; padding-top:40px; }
+.prompt button { position:absolute; top:8px; right:8px; font:13px sans-serif; padding:4px 12px; border-radius:4px;
+  border:1px solid var(--rule); background:var(--bg); color:var(--accent); cursor:pointer; }
+.steps { padding-left:22px; } .steps li { margin:6px 0; }
+footer { border-top:1px solid var(--rule); color:var(--muted); font-size:14px; }
+footer .bar { display:block; }
+</style>
+<script>window.MathJax = {tex: {inlineMath: [['$', '$']], displayMath: [['$$', '$$']]}, svg: {fontCache: 'global'}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+</head>
+<body>
+<header><div class="bar"><a class="brand" href="../index.html"><img src="../figures/logo/feynfacet-logo.svg" alt="FeynFacet"></a><nav><a href="../index.html">Overview</a> <a href="../results.html">Results</a> <a href="../method.html">Method</a> <a href="../reproduce.html">Reproduce</a> <a href="../example.html">Example</a> <a href="../references.html">References</a> <a href="../paper.html">Paper</a> <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">Code</a></nav></div></header>
+<main>
+<h1>Off-diagonal lepton channels</h1>
+
+<p class="lead">$\ell\,q\to g+X$ and $\ell\,g\to q+X$, which start at order $\alpha_{\rm em}^2\alpha_s$.</p>
+<div class="tiles "><figure><div class="diagram"><img src="../figures/diagrams/leptonoffdiagonal-gq-1.svg" alt="ℓ g → q + X (observed quark): photon-gluon fusion, diagram 1 of 2." loading="lazy"></div><figcaption>ℓ g → q + X (observed quark): photon-gluon fusion, diagram 1 of 2.</figcaption></figure><figure><div class="diagram"><img src="../figures/diagrams/leptonoffdiagonal-gq-2.svg" alt="ℓ g → q + X (observed quark): photon-gluon fusion, diagram 2 of 2." loading="lazy"></div><figcaption>ℓ g → q + X (observed quark): photon-gluon fusion, diagram 2 of 2.</figcaption></figure><figure><div class="diagram"><img src="../figures/diagrams/leptonoffdiagonal-qg-1.svg" alt="ℓ q → g + X (observed gluon): real-emission diagram 1 of 2." loading="lazy"></div><figcaption>ℓ q → g + X (observed gluon): real-emission diagram 1 of 2.</figcaption></figure><figure><div class="diagram"><img src="../figures/diagrams/leptonoffdiagonal-qg-2.svg" alt="ℓ q → g + X (observed gluon): real-emission diagram 2 of 2." loading="lazy"></div><figcaption>ℓ q → g + X (observed gluon): real-emission diagram 2 of 2.</figcaption></figure></div>
+<p>There is no Born term, so the finite coefficients contain only the regular part $c_{\rm reg}(v,w)$, with
+$P=\alpha_{\rm em}^2\alpha_s C_F e_q^2/(\pi s v w)$ for $\ell\,q\to g$ and
+$P=\alpha_{\rm em}^2\alpha_s T_R e_q^2/(\pi s v w)$ for $\ell\,g\to q$ (invariants and scales as for
+<a href="leptonquark.html">lepton–quark scattering</a>).  The collinear
+counterterm is the fragmentation $q\to g$ of the Born quark or the parton distribution $g\to q$, and the
+photon-in-lepton subtraction uses the photon Born processes.</p>
+<h2>Checks</h2>
+<p>Exact agreement with Hinderer, Schlegel and Vogelsang (2015, 2017), unpolarized and polarized, in all
+three algebra routes.</p>
+<h2>Files</h2>
+<p><a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/tree/main/Processes/LeptonOffDiagonal">Processes/LeptonOffDiagonal</a> ·
+<a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/blob/main/Coefficients/LeptonOffDiagonal.wl">Coefficients/LeptonOffDiagonal.wl</a></p>
+</main>
+<footer><div class="bar">FeynFacet — Z.-B. Kang, W. Vogelsang, C. Zhang.
+Source code and coefficients: <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">https://github.com/qcdphysics/FeynFacet</a>.
+<a href="../LICENSE.txt">MIT license</a>.</div></footer>
+</body></html>

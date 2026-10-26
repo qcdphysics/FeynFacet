@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Method — FeynFacet</title>
+<style>
+/* a reading column for physicists: serif text, slate-blue accent, light and dark themes */
+:root { --ink:#1d2433; --muted:#5a6275; --accent:#3d4f8a; --accent2:#6b4fa0; --rule:#d9dce4;
+        --panel:#f5f6f9; --ok:#21734a; --new:#8a3d6b; --bg:#ffffff; --tile:#ffffff; --tileink:#555b66; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --ink:#e3e6ee; --muted:#a3a9b8; --accent:#9fb0ea; --accent2:#c3a8ef; --rule:#343a48;
+          --panel:#1b1f29; --ok:#6fcf9b; --new:#e39ac5; --bg:#12151c; --tile:#f4f5f8; --tileink:#3d4250; color-scheme:dark; } }
+:root[data-theme="dark"] { --ink:#e3e6ee; --muted:#a3a9b8; --accent:#9fb0ea; --accent2:#c3a8ef; --rule:#343a48;
+          --panel:#1b1f29; --ok:#6fcf9b; --new:#e39ac5; --bg:#12151c; --tile:#f4f5f8; --tileink:#3d4250; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.6 Georgia,"DejaVu Serif",serif; }
+header { border-bottom:1px solid var(--rule); }
+.bar { max-width:980px; margin:0 auto; padding:14px 20px; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 22px; }
+.brand { font-size:22px; font-weight:bold; color:var(--accent); text-decoration:none; letter-spacing:.3px; }
+.brand span { color:var(--accent2); }
+.brand img { height:16px; width:auto; display:block; }
+.bar { align-items:center; }
+h1.logo { margin:34px 0 20px; }
+h1.logo + p.lead { font-size:17.5px; }
+h1.logo img { display:block; width:min(100%, 360px); height:auto; margin-bottom:12px; }
+h1.logo span { display:block; font-size:26px; font-weight:normal; color:var(--muted); text-wrap:balance; }
+nav a { color:var(--muted); text-decoration:none; font-size:15px; margin-right:16px; }
+nav a.on, nav a:hover { color:var(--accent); }
+main { max-width:980px; margin:0 auto; padding:10px 20px 60px; min-width:0; }
+.wide { overflow-x:auto; }
+h1 { font-size:32px; line-height:1.25; margin:28px 0 6px; }
+h2 { font-size:23px; margin:38px 0 10px; padding-bottom:4px; border-bottom:1px solid var(--rule); }
+h3 { font-size:19px; margin:24px 0 6px; }
+p.lead { font-size:19px; color:var(--muted); margin-top:4px; }
+a { color:var(--accent); }
+table { border-collapse:collapse; width:100%; margin:12px 0 18px; font-size:15px; }
+th, td { border-bottom:1px solid var(--rule); padding:7px 8px; text-align:left; vertical-align:top; }
+th { font-weight:normal; color:var(--muted); font-size:14px; }
+tr.group td { font-weight:bold; background:var(--panel); }
+.tag { display:inline-block; font-size:12.5px; padding:1px 8px; border-radius:10px; border:1px solid currentColor; white-space:nowrap; }
+.tag.new { color:var(--new); } .tag.known { color:var(--ok); }
+.panel { background:var(--panel); border-radius:6px; padding:14px 18px; margin:16px 0; }
+.standard { counter-reset:n; list-style:none; padding:0; }
+.standard li { counter-increment:n; margin:10px 0 10px 38px; position:relative; }
+.standard li::before { content:counter(n); position:absolute; left:-38px; top:0; width:26px; height:26px; border-radius:50%;
+  background:var(--accent); color:var(--bg); text-align:center; font:bold 14px/26px sans-serif; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin:14px 0; }
+.tiles figure { margin:0; background:var(--tile); border:1px solid var(--rule); border-radius:6px; padding:6px; }
+.tiles .diagram { aspect-ratio:6 / 5; }
+.tiles img { width:100%; height:100%; object-fit:contain; object-position:center; display:block; }
+.tiles.tmd { grid-template-columns:repeat(2,minmax(0,240px)); }
+.tiles figcaption { font-size:12.5px; color:var(--tileink); text-align:center; margin-top:4px; }
+figure.plot { margin:22px 0; } figure.plot img { width:100%; background:var(--tile); border-radius:4px; }
+figure.plot figcaption { font-size:14.5px; color:var(--muted); margin-top:6px; }
+pre, code { font-family:"DejaVu Sans Mono",Menlo,monospace; font-size:14px; }
+pre { background:var(--panel); padding:12px 14px; border-radius:6px; overflow-x:auto; }
+.refs li { margin:8px 0; } .refs .note { color:var(--muted); font-size:14.5px; }
+.prompt { position:relative; } .prompt pre { white-space:pre-wrap; padding-top:40px; }
+.prompt button { position:absolute; top:8px; right:8px; font:13px sans-serif; padding:4px 12px; border-radius:4px;
+  border:1px solid var(--rule); background:var(--bg); color:var(--accent); cursor:pointer; }
+.steps { padding-left:22px; } .steps li { margin:6px 0; }
+footer { border-top:1px solid var(--rule); color:var(--muted); font-size:14px; }
+footer .bar { display:block; }
+</style>
+<script>window.MathJax = {tex: {inlineMath: [['$', '$']], displayMath: [['$$', '$$']]}, svg: {fontCache: 'global'}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+</head>
+<body>
+<header><div class="bar"><a class="brand" href="index.html"><img src="figures/logo/feynfacet-logo.svg" alt="FeynFacet"></a><nav><a href="index.html">Overview</a> <a href="results.html">Results</a> <a href="method.html" class=on>Method</a> <a href="reproduce.html">Reproduce</a> <a href="example.html">Example</a> <a href="references.html">References</a> <a href="paper.html">Paper</a> <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">Code</a></nav></div></header>
+<main>
+
+<h1>Method</h1>
+<p class="lead">Every process follows the same sequence of steps, one notebook each; the processes differ in the
+integral families and counterterms they need.  The squaring is done three times, independently, by <a target="_blank" rel="noopener" href="https://feyncalc.github.io">FeynCalc</a>,
+<a target="_blank" rel="noopener" href="https://form-dev.github.io/form/">FORM</a> and
+<a target="_blank" rel="noopener" href="https://library.wolfram.com/infocenter/MathSource/2987/">Tracer</a>; from the integrals onward the same reduction and assembly act on each workflow's squares, and the
+results are required to agree.</p>
+
+<div class="wide"><table>
+<tr><th>Step</th><th>Notebook</th><th>Tools</th><th>Output</th></tr>
+<tr><td>1</td><td>Diagrams and amplitudes</td><td>FeynArts</td><td>plain records: coefficient, open fermion chains, closed loops</td></tr>
+<tr><td>2</td><td>Spin and color algebra</td><td>FeynCalc &nbsp;|&nbsp; FORM + <code>color.h</code> &nbsp;|&nbsp; Tracer</td><td>Born table, virtual (one-loop) interference, real-emission squares</td></tr>
+<tr><td>3</td><td>Integrals</td><td>reverse unitarity; Kira (IBP reduction); SubTropica (master integrals)</td><td>real and virtual contributions as Laurent series in $\epsilon$</td></tr>
+<tr><td>4–5</td><td>Assembly</td><td>Mathematica</td><td>distributions, MSbar renormalization and factorization, finite coefficients, comparison with the references</td></tr>
+</table></div>
+
+<h2>1. Diagrams</h2>
+<p><a target="_blank" rel="noopener" href="https://www.feynarts.de/">FeynArts</a> generates the Born, virtual (one-loop) and real-emission diagrams of each process (closed quark loops counted by
+$N_f$).  They are written once as plain records, a commuting coefficient times open fermion chains and closed
+fermion loops, from which each algebra workflow computes its squares on its own; in the proton–proton processes the
+FORM and Tracer notebooks read the FeynCalc squares only at their end, to compare with them.</p>
+
+<h2>2. Three independent algebra workflows</h2>
+<div class="wide"><table>
+<tr><th>Workflow</th><th>Dirac algebra</th><th>Color</th></tr>
+<tr><td>FeynCalc</td><td>traces and contractions in Mathematica, each amplitude simplified once</td><td>SU(N) algebra of FeynCalc, once per color network</td></tr>
+<tr><td>FORM</td><td>one FORM job per product $M_i M_j^*$; Mathematica writes the diagrams as color structures times Lorentz parts</td><td>the FORM package <code>color.h</code>, before the Dirac algebra</td></tr>
+<tr><td>Tracer</td><td>the Tracer package, in a kernel without FeynCalc</td><td>an explicit SU(N) reduction written in the notebook (traces, Fierz identity, closed loops)</td></tr>
+</table></div>
+<p>Spin densities, for an incoming quark of momentum $k$ and an outgoing quark of momentum $p$: $\tfrac12\not k$ for
+an unpolarized incoming quark and $\not p$ for the spin sum of an outgoing one, $\tfrac12\not k\gamma_5$ for the
+helicity difference, $\tfrac12\not k\gamma_5\not s_T$ for a transversely polarized incoming quark, and the projection
+$\not p\gamma_5\not s_T'$ on an observed transversely polarized quark (antiquarks with the charge-conjugated
+matrices).  Gluons have physical polarization sums with a reference vector $n$,
+$-g^{\mu\nu}+(k^\mu n^\nu+n^\mu k^\nu)/(k\cdot n)$, averaged with $1/(D-2)$ for an unpolarized incoming gluon, and
+$i\epsilon^{\mu\nu\alpha\beta}k_\alpha n_\beta/(2k\cdot n)$, with $n$ lightlike, for the helicity difference of an
+incoming gluon; for selected processes gauge invariance is checked by changing the reference vectors.  $\gamma_5$
+follows the HVBM scheme (<a target="_blank" rel="noopener" href="https://doi.org/10.1016/0550-3213(72)90279-9">'t Hooft and Veltman</a>; <a target="_blank" rel="noopener" href="https://doi.org/10.1007/BF01609069">Breitenlohner and Maison</a>): it anticommutes with the four-dimensional and commutes with the $(D-4)$-dimensional Dirac matrices,
+and the hatted components of loop and unobserved momenta are kept.</p>
+<p>In the proton–proton processes, at the end of step 2 each workflow's squares are compared with the FeynCalc ones in
+exact rational arithmetic at two random points of all variables, with a separate random value assigned to each scalar
+integral.  These are sampled comparisons of linear combinations of integral coefficients, not coefficientwise symbolic
+identities.  In every process the finite coefficients of the three workflows are compared at the end: symbolically
+for the lepton–proton and TMD calculations, at test points for proton–proton collisions.</p>
+
+<h2>3. Integrals</h2>
+<p>Two programs do the integration.  <a target="_blank" rel="noopener" href="https://kira.hepforge.org/">Kira</a> uses integration-by-parts
+identities to reduce both virtual loop integrals and, through reverse unitarity, real-emission phase-space
+integrals to a set of master integrals per family.  <a target="_blank" rel="noopener" href="https://subtropi.ca/">SubTropica</a>
+then evaluates each master analytically from its Feynman-parameter (Euler-integral) representation, with the
+integrator HyperIntica, and returns its Laurent series in $\epsilon$ to the order needed.  In the collinear processes
+the masters that are Gamma or hypergeometric functions are also compared with their closed forms.</p>
+<h3>Real emission: reverse unitarity</h3>
+<p>At fixed observed momentum $p$, the real emission is integrated over the unobserved massless pair with total
+momentum $P_X$ and invariant mass $P_X^2=s_4=sv(1-w)$, where $P_X=k_a+k_b-p$ for parton–parton and $P_X=l+k-p$ for
+lepton–parton scattering:
+$$\int d\Phi_2^{(D)}\,F(r)=(2\pi)^{2-D}\int d^Dr\,\delta_+(r^2)\,\delta_+\big((P_X-r)^2\big)\,F(r),\qquad
+\delta_+(k^2)=\theta(k^0)\,\delta(k^2).$$
+Reverse unitarity writes each on-shell constraint as a cut propagator,
+$$\delta(X)=\frac{1}{2\pi i}\Big(\frac{1}{X-i0}-\frac{1}{X+i0}\Big),$$
+so that the phase-space integrals become cut integrals, reduced by integration-by-parts identities like loop
+integrals; the positive-energy conditions are kept in the definition of the cut masters.  Partial fractions rewrite
+the integrand as a sum of terms with at most two linearly independent ordinary denominators, so each integral family
+has the two cut propagators and two ordinary denominators (six families in proton–proton collisions, three in
+lepton–quark scattering); integrals with a nonpositive power of a cut propagator vanish.  Kira generates the
+reduction identities at a symbolic integration dimension $d$, evaluated at $d=D$ for ordinary integrals and at the
+shifted dimensions below for integrals with evanescent numerators.  The masters are the two-body phase-space volume
+and angular integrals with both ordinary denominators; up to prefactors, the angular masters are values of one
+dimension-dependent function at different cross ratios.  Their singular terms take the form
+$(1-w)^{-1-\lambda\epsilon}B_\lambda(w,\epsilon)$ with $B_\lambda$ regular at $w=1$, and are expanded in
+distributions in step 4.</p>
+<h3>Virtual corrections</h3>
+<p>The virtual integrals reduce to an off-shell massless bubble in lepton–quark scattering, and to massless bubbles
+and boxes in the hadronic processes, written in the three box families (s,t), (s,u), (t,u).  The bubbles are Euler
+integrals; the boxes are evaluated with SubTropica from their Feynman-parameter representation in the
+Euclidean region and continued with the Feynman prescription to the physical region $s>0$ before the real part of the
+interference is taken.  In the hadronic processes the loop normalization $2/(4\pi)^{D/2}$ is derived from the
+FeynArts loop measure and checked twice: the coefficient of $1/\epsilon^2$ must equal the universal
+$-\frac{\alpha_s}{2\pi}\sum_i C_i$ times the Born term, with $C_i=C_F$ for a quark and $C_A$ for a gluon summed over
+the external partons $i$, and the poles must cancel against the real emission.</p>
+<h3>HVBM: the dimension shift</h3>
+<p>In the HVBM scheme a $D$-dimensional momentum $q$ is split into a four-dimensional part and a
+$(D-4)$-dimensional part $\widehat q$; the external momenta are four-dimensional.  After the traces, the squared
+matrix elements therefore contain powers of $\widehat q^{\,2}$ for the loop momentum and for the unobserved momenta of
+the real emission, in addition to the ordinary propagators.  Such evanescent numerators are removed by raising the
+dimension of the integral.  For a scalar integrand $F(q)$ with four-dimensional external momenta, and with
+$\mu_q^2=-\widehat q^{\,2}$ in the mostly-minus metric, the normalized one-loop identity is</p>
+$$\int\frac{d^Dq}{i\pi^{D/2}}\,(\mu_q^2)^n F(q)=(-\epsilon)_n\int\frac{d^{D+2n}q}{i\pi^{(D+2n)/2}}\,F(q),
+\qquad D=4-2\epsilon,$$
+<p>where $n$ is a nonnegative integer and $(-\epsilon)_n=\Gamma(n-\epsilon)/\Gamma(-\epsilon)$.  For an insertion
+$(\widehat q^{\,2})^n$ the coefficient of the shifted integral is $(-1)^n(-\epsilon)_n$, equal to $+\epsilon$ for
+$n=1$.  For the two-body phase-space measure of the real emission above, the corresponding factor is
+$(4\pi)^n(-1)^n(-\epsilon)_n$.</p>
+<p>Only the integral moves to $D+2n$ dimensions: its IBP coefficients and master integrals are evaluated at
+$d=D+2n$, while $D=4-2\epsilon$ is kept in the trace coefficients, spin projectors and spin averages.  Shifting those
+as well would change, for instance, the $\delta(1-w)$ coefficient of the helicity difference by a rational term
+proportional to the Born.  The evanescent numerator factors are retained because their products with poles can
+remain finite.</p>
+<h3>Transverse spins</h3>
+<p>The momenta $k_a$, $k_b$ of the two incoming partons and $p$ of the observed parton span the scattering plane
+(the code calls the incoming momenta $p_a$, $p_b$).  Spin vectors are decomposed on in-plane axes $X$ and on the
+normal $N\propto\epsilon^{\mu k_a k_b p}$, with $N^2=-1$; the squares are computed as the components XX, NN, XN, NX,
+and the mixed ones must vanish.</p>
+<p>The normal components of the unobserved momenta and of the loop momentum enter only through $(N\cdot q)^2$, where
+$q$ is the momentum in question.  Write $q=q_\parallel+c_N N+\widehat q$, with $q_\parallel$ in the scattering plane,
+$c_N$ a number and $\widehat q$ the $(D-4)$-dimensional part introduced above.  Since $N$ is orthogonal to the plane and
+to the $(D-4)$-dimensional directions, $q^2=q_\parallel^2-c_N^2+\widehat q^{\,2}$, so that</p>
+$$(N\cdot q)^2=c_N^2=q_\parallel^2-q^2+\widehat q^{\,2}.$$
+<p>The in-plane part is fixed by the three scalar products of $q$ with $k_a$, $k_b$ and $p$.  Writing $p_1=k_a$,
+$p_2=k_b$, $p_3=p$ and $G_{ij}=p_i\cdot p_j$ for the $3\times3$ table of their scalar products (the Gram matrix),</p>
+$$q_\parallel^2=\sum_{i,j=1}^{3}(q\cdot p_i)\,\big(G^{-1}\big)_{ij}\,(q\cdot p_j).$$
+<p>For the unobserved partons of the real emission $q^2=0$; for the loop momentum, $q^2$ and the products $q\cdot p_i$
+are combinations of the propagators, and $\widehat q^{\,2}$ is handled by the dimension shift above.  Odd powers of
+$N\cdot q$ vanish: in the phase-space integral by reflection through the scattering plane, and in the loop because
+its tensor integrals can only be built from $k_a$, $k_b$ and $p$.  No new integrals appear.</p>
+
+<h2>4. Distributions and counterterms</h2>
+<p>Near threshold the real emission is expanded in distributions,
+$$(1-w)^{-1-\lambda\epsilon} = -\frac{\delta(1-w)}{\lambda\epsilon} + \Big[\frac{1}{1-w}\Big]_+ - \lambda\epsilon\Big[\frac{\ln(1-w)}{1-w}\Big]_+ + \dots,$$
+with $\lambda$ the exponent of the singular term, the virtual correction is renormalized in MSbar, and the collinear
+singularities are removed with the $D$-dimensional Born table (its order-$\epsilon$ terms included) and the
+unpolarized, helicity or transversity kernels, e.g. $P^T_{qq}=C_F\big[\frac{2z}{(1-z)_+}+\frac32\delta(1-z)\big]$
+($\delta P_{qq}$ in the code).  For the helicity difference the finite term
+$-(\alpha_s/2\pi)\,\Delta f_{qq}\otimes\sigma_{LL}^{(0)}$, with $\Delta f_{qq}(z)=-4C_F(1-z)$, is added on each
+longitudinally polarized incoming quark or antiquark; it restores the helicity convention of the polarized MSbar
+parton distributions.  Transversity needs no such term.  Double and single poles must cancel exactly.</p>
+
+<h2>5. Checks</h2>
+<ul>
+<li>the three workflows: equal finite coefficients (with separate reduction and finite assembly for each route), and
+for proton–proton collisions equal squares (exact arithmetic at random rational points);</li>
+<li>for selected processes, gauge invariance of the real-emission squares under a change of the gluon reference
+vectors, and Ward identities of the TMD currents;</li>
+<li>the universal double pole of the virtual correction, and the cancellation of all poles;</li>
+<li>the scale dependence: the derivatives with respect to the factorization scales equal the Born terms convolved with
+the leading-order splitting kernels;</li>
+<li>helicity conservation in the pure-annihilation channel $q_i\bar q_i\to q_k+X$, $k\ne i$:
+$\sigma_{LL}=-\sigma$ in each distribution sector;</li>
+<li>in the TMD calculation, the cancellation of the rapidity-scale dependence between the beam and soft functions;</li>
+<li>independent results: the Fortran codes of Aversa et al. (UU), Jäger, Schäfer, Stratmann, Vogelsang (LL) and
+Mukherjee, Stratmann, Vogelsang (TT), and the published unpolarized and longitudinal lepton–proton and TMD results;</li>
+<li>the generalized crossing symmetry between the double-transverse cross sections and the transverse spin transfer.</li>
+</ul>
+<p>Every check is a <code>Require</code> in the notebook that performs it: a run that does not pass it stops.</p>
+
+</main>
+<footer><div class="bar">FeynFacet — Z.-B. Kang, W. Vogelsang, C. Zhang.
+Source code and coefficients: <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">https://github.com/qcdphysics/FeynFacet</a>.
+<a href="LICENSE.txt">MIT license</a>.</div></footer>
+</body></html>

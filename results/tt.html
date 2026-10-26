@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Double-transverse proton–proton collisions — FeynFacet</title>
+<style>
+/* a reading column for physicists: serif text, slate-blue accent, light and dark themes */
+:root { --ink:#1d2433; --muted:#5a6275; --accent:#3d4f8a; --accent2:#6b4fa0; --rule:#d9dce4;
+        --panel:#f5f6f9; --ok:#21734a; --new:#8a3d6b; --bg:#ffffff; --tile:#ffffff; --tileink:#555b66; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --ink:#e3e6ee; --muted:#a3a9b8; --accent:#9fb0ea; --accent2:#c3a8ef; --rule:#343a48;
+          --panel:#1b1f29; --ok:#6fcf9b; --new:#e39ac5; --bg:#12151c; --tile:#f4f5f8; --tileink:#3d4250; color-scheme:dark; } }
+:root[data-theme="dark"] { --ink:#e3e6ee; --muted:#a3a9b8; --accent:#9fb0ea; --accent2:#c3a8ef; --rule:#343a48;
+          --panel:#1b1f29; --ok:#6fcf9b; --new:#e39ac5; --bg:#12151c; --tile:#f4f5f8; --tileink:#3d4250; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.6 Georgia,"DejaVu Serif",serif; }
+header { border-bottom:1px solid var(--rule); }
+.bar { max-width:980px; margin:0 auto; padding:14px 20px; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 22px; }
+.brand { font-size:22px; font-weight:bold; color:var(--accent); text-decoration:none; letter-spacing:.3px; }
+.brand span { color:var(--accent2); }
+.brand img { height:16px; width:auto; display:block; }
+.bar { align-items:center; }
+h1.logo { margin:34px 0 20px; }
+h1.logo + p.lead { font-size:17.5px; }
+h1.logo img { display:block; width:min(100%, 360px); height:auto; margin-bottom:12px; }
+h1.logo span { display:block; font-size:26px; font-weight:normal; color:var(--muted); text-wrap:balance; }
+nav a { color:var(--muted); text-decoration:none; font-size:15px; margin-right:16px; }
+nav a.on, nav a:hover { color:var(--accent); }
+main { max-width:980px; margin:0 auto; padding:10px 20px 60px; min-width:0; }
+.wide { overflow-x:auto; }
+h1 { font-size:32px; line-height:1.25; margin:28px 0 6px; }
+h2 { font-size:23px; margin:38px 0 10px; padding-bottom:4px; border-bottom:1px solid var(--rule); }
+h3 { font-size:19px; margin:24px 0 6px; }
+p.lead { font-size:19px; color:var(--muted); margin-top:4px; }
+a { color:var(--accent); }
+table { border-collapse:collapse; width:100%; margin:12px 0 18px; font-size:15px; }
+th, td { border-bottom:1px solid var(--rule); padding:7px 8px; text-align:left; vertical-align:top; }
+th { font-weight:normal; color:var(--muted); font-size:14px; }
+tr.group td { font-weight:bold; background:var(--panel); }
+.tag { display:inline-block; font-size:12.5px; padding:1px 8px; border-radius:10px; border:1px solid currentColor; white-space:nowrap; }
+.tag.new { color:var(--new); } .tag.known { color:var(--ok); }
+.panel { background:var(--panel); border-radius:6px; padding:14px 18px; margin:16px 0; }
+.standard { counter-reset:n; list-style:none; padding:0; }
+.standard li { counter-increment:n; margin:10px 0 10px 38px; position:relative; }
+.standard li::before { content:counter(n); position:absolute; left:-38px; top:0; width:26px; height:26px; border-radius:50%;
+  background:var(--accent); color:var(--bg); text-align:center; font:bold 14px/26px sans-serif; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin:14px 0; }
+.tiles figure { margin:0; background:var(--tile); border:1px solid var(--rule); border-radius:6px; padding:6px; }
+.tiles .diagram { aspect-ratio:6 / 5; }
+.tiles img { width:100%; height:100%; object-fit:contain; object-position:center; display:block; }
+.tiles.tmd { grid-template-columns:repeat(2,minmax(0,240px)); }
+.tiles figcaption { font-size:12.5px; color:var(--tileink); text-align:center; margin-top:4px; }
+figure.plot { margin:22px 0; } figure.plot img { width:100%; background:var(--tile); border-radius:4px; }
+figure.plot figcaption { font-size:14.5px; color:var(--muted); margin-top:6px; }
+pre, code { font-family:"DejaVu Sans Mono",Menlo,monospace; font-size:14px; }
+pre { background:var(--panel); padding:12px 14px; border-radius:6px; overflow-x:auto; }
+.refs li { margin:8px 0; } .refs .note { color:var(--muted); font-size:14.5px; }
+.prompt { position:relative; } .prompt pre { white-space:pre-wrap; padding-top:40px; }
+.prompt button { position:absolute; top:8px; right:8px; font:13px sans-serif; padding:4px 12px; border-radius:4px;
+  border:1px solid var(--rule); background:var(--bg); color:var(--accent); cursor:pointer; }
+.steps { padding-left:22px; } .steps li { margin:6px 0; }
+footer { border-top:1px solid var(--rule); color:var(--muted); font-size:14px; }
+footer .bar { display:block; }
+</style>
+<script>window.MathJax = {tex: {inlineMath: [['$', '$']], displayMath: [['$$', '$$']]}, svg: {fontCache: 'global'}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+</head>
+<body>
+<header><div class="bar"><a class="brand" href="../index.html"><img src="../figures/logo/feynfacet-logo.svg" alt="FeynFacet"></a><nav><a href="../index.html">Overview</a> <a href="../results.html">Results</a> <a href="../method.html">Method</a> <a href="../reproduce.html">Reproduce</a> <a href="../example.html">Example</a> <a href="../references.html">References</a> <a href="../paper.html">Paper</a> <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">Code</a></nav></div></header>
+<main>
+<h1>Double-transverse proton–proton collisions</h1>
+
+<p class="lead">The NLO hard part of the double-spin asymmetry $A_{TT}$ of single-inclusive hadron production in
+collisions of two transversely polarized protons, $a^\uparrow b^\uparrow\to c+X$.  <span class="tag known">known, rederived</span></p>
+<h2>What is computed</h2>
+<p>Each incoming quark or antiquark carries the chiral-odd density $\tfrac12\not k_a\gamma_5\not s_a$ (and likewise
+for $b$), whose partonic
+cross section multiplies its transversity distribution $\delta f$; the observed parton is unpolarized.  The cross
+section depends on the azimuth $\Phi$ of the observed parton about the common spin axis as $\cos 2\Phi$, and the hard
+part is the coefficient of $\cos 2\Phi$ in $\tfrac12[\sigma(\uparrow\uparrow)-\sigma(\uparrow\downarrow)]$, written in the distribution form below.</p>
+
+<p>For a measured parton of momentum $p$ the partonic cross section $\sigma = s\,E\,d\sigma/d^3p$ is written in
+$v = 1 + t/s$ and $w = -u/(s+t)$, with $s=(k_a+k_b)^2$, $t=(k_a-p)^2$, $u=(k_b-p)^2$ for incoming partons of momenta $k_a$, $k_b$ and $0 &lt; v,w &lt; 1$:</p>
+$$\sigma = \sigma_{\rm Born}\,\delta(1-w) + P(v,w)\,c_{\rm reg}(v,w) + P(v,1)\big[c_{0}(v)\,\big[\tfrac{1}{1-w}\big]_+ + c_{1}(v)\,\big[\tfrac{\ln(1-w)}{1-w}\big]_+ + c_{\delta}(v)\,\delta(1-w)\big],$$
+<p>Here $\sigma_{\rm Born}$ is the lowest-order term, and $c_{\rm reg}$, $c_0$, $c_1$, $c_\delta$ are the coefficients
+$R$, $B$, $C$, $A$ of the paper, with $P$ its normalization $\mathcal N$.  The scales enter through $L_R=\ln(\mu_R^2/s)$, $L_F=\ln(\mu_F^2/s)$ for the incoming partons and $L_{FF}=\ln(\mu_{FF}^2/s)$ for the fragmenting one ($\mu_{FF}$ is the $\mu_F'$ of the paper).</p>
+<p>Here $P = \alpha_s^3/(\pi s v w)$; $L_F$ refers to both transversity densities.
+Only five of the sixteen channel classes contribute: a gluon has no transversity, and the two helicity flips
+must sit on one fermion line of the cut diagram (annihilation, or the exchange interference of identical
+quarks).  Class 7 starts at order $\alpha_s^3$.</p>
+
+<h2>The calculation</h2>
+<p>The diagrams, the squaring, the reduction and the counterterm formulas are those of the unpolarized and
+longitudinal classes.  The spin vectors are written in the basis of the scattering plane,
+$s=\cos\varphi\,e_X+\sin\varphi\,e_N$, with $e_X$ in the plane along the transverse momentum of the observed
+parton and $e_N$ the normal, and the squares are computed as the components $XX$ and $NN$ (the mixed ones vanish
+by parity, which is checked).  The normal component of the unobserved momentum is reduced through the Gram
+matrix of the three external momenta, the normal component of the loop momentum by symmetric integration.
+In the HVBM scheme the symmetric part $(XX+NN)/2$ is evanescent but not zero in $D$ dimensions; the hard part is
+$(XX-NN)/2$, and the symmetric part is carried along as a check: its finite remainder vanishes in every
+class, so no finite renormalization is needed.  Counterterms: the transversity kernel
+$P^T_{qq}(z)=C_F[2z/(1-z)_+ + \tfrac32\delta(1-z)]$ ($\delta P_{qq}$ in the code) on both incoming legs, the unpolarized kernels for the
+fragmenting parton, with the $D$-dimensional TT Born table.</p>
+
+<h2>Checks</h2>
+<div class="wide"><table><tr><th>Class</th><th>Process</th><th>Born</th><th>Squares: FeynCalc = FORM = Tracer</th>
+<th>vs Mukherjee–Stratmann–Vogelsang code</th><th>Symmetric remainder</th></tr><tr><td>5</td><td>$q\,\bar q\to q'$</td><td>yes</td><td>agree (2 random exact points)</td><td>agrees (all four coefficients, each route)</td><td>0</td></tr><tr><td>6</td><td>$q\,q\to q$</td><td>yes</td><td>agree (2 random exact points)</td><td>agrees (all four coefficients, each route)</td><td>0</td></tr><tr><td>7</td><td>$q\,q\to g$</td><td>no</td><td>agree (2 random exact points)</td><td>agrees (all four coefficients, each route)</td><td>0</td></tr><tr><td>11</td><td>$q\,\bar q\to q$</td><td>yes</td><td>agree (2 random exact points)</td><td>agrees (all four coefficients, each route)</td><td>0</td></tr><tr><td>12</td><td>$q\,\bar q\to g$</td><td>yes</td><td>agree (2 random exact points)</td><td>agrees (all four coefficients, each route)</td><td>0</td></tr></table></div>
+<p>The reference is the Fortran code of Mukherjee, Stratmann and Vogelsang (2005), transcribed verbatim into
+Mathematica; its slots hold one half of the $\cos 2\Phi$ coefficient, a factor fixed on the Born term and
+confirmed by the renormalization- and factorization-scale terms. The four coefficients are evaluated with
+30-digit arithmetic at six rational kinematic points and $N_f=4,5$ (12 SU(3) points), using distinct fixed
+renormalization, initial-state and fragmentation scales. The required SU(3) scaled residual is below
+$10^{-20}$. Additional $C_A=2,5$ diagnostics, with $C_F=(C_A^2-1)/(2C_A)$, are reported separately; the
+reference code's general-color validity is not assumed. The Born terms equal the lowest-order cross sections of Soffer, Stratmann and Vogelsang (2002).  Inside the
+notebooks: poles cancel, the scale derivatives are those of the evolution equations, the real-emission squares
+are gauge invariant, and the squares of the three routes agree (exact arithmetic at two random rational points).</p>
+<p>All five classes are reduced and assembled separately in each of the three algebra routes.
+Their squared matrix elements agree at two exact-rational points, and their finite coefficients are compared at six sampled points.</p>
+
+<h2>Files</h2>
+<p>Notebooks: <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/tree/main/Processes/HadronicTT">Processes/HadronicTT</a>; conventions:
+<a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/blob/main/docs/TRANSVERSE-PP.md">docs/TRANSVERSE-PP.md</a>; reference code:
+<a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/blob/main/Reference/pp-transverse-fortran.wl">Reference/pp-transverse-fortran.wl</a>.
+Coefficients: <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet/blob/main/Coefficients/ProtonProtonTT.wl">Coefficients/ProtonProtonTT.wl</a>
+(classes 5, 6, 7, 11, 12).</p>
+<pre>python3 Coefficients/evaluate.py tt 5 0.3 0.2 --digits 30</pre>
+
+</main>
+<footer><div class="bar">FeynFacet — Z.-B. Kang, W. Vogelsang, C. Zhang.
+Source code and coefficients: <a target="_blank" rel="noopener" href="https://github.com/qcdphysics/FeynFacet">https://github.com/qcdphysics/FeynFacet</a>.
+<a href="../LICENSE.txt">MIT license</a>.</div></footer>
+</body></html>
